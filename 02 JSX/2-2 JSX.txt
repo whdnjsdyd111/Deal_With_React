@@ -1,0 +1,27 @@
+            2-2 JSX란?
+
+JSX는 자바스크립트의 확장 문법이머 XML과 비슷하게 생겼다.
+이런 코드는 브라우저 실행 전 번들링 과정에서 바벨을 사용하여 자바스크립트 형태로 변환된다.
+JSX 코드가 어떻게 변환되는지 확인하자.
+
+
+function App() {
+    return (
+        <div>
+            Hello <b>react<b>
+        </div>
+    );
+}
+
+
+이렇게 작성된 코드는 다음과 같이 변환된다.
+
+
+function App() {
+    return React.createElement("div", null, "Hello", React.createElement("b", null, "react"));
+}
+
+
+만약 컴포넌트를 렌더링할 때마다 JSX 코드를 작성하는 것이 아니라 위 코드처럼 매번 React.createElement 함수를
+사용해야 한다면 매우 불편할 것이다.
+JSX를 사용하면 매우 편하게 UI를 렌더링할 수 있다.

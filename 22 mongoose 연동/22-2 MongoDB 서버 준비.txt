@@ -1,0 +1,22 @@
+            22.2 MongoDB 서버 준비
+
+        22.2.1 설치
+    
+MongoDB 서버를 사용하려면 우선 설치부터 해야 한다.
+
+https://www.mongodb.com/download-center/community
+
+
+        22.2.2 MongoDB 작동 확인
+
+MongoDB가 성공적으로 설치되었고 제대로 가동 중인지 확인하려면, 터미널에서 mongo를 입력해 본다.
+
+
+$ mongo
+
+
+터미널에서 클라이언트가 실행된다면 version() 이라는 명령어를 입력해보자.
+
+
+> version()
+4.2.8

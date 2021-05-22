@@ -1,0 +1,210 @@
+            27.2 포스트 삭제
+
+마지막으로 구현할 프로젝트의 기능은 포스트 삭제이다. 이에 대한 작업을 마치면 프로젝트를 마무리된다.
+
+삭제 버튼을 누를 때 포스트를 바로 삭제하는 것이 아니라, 사용자의 확인을 한 번 더 요청하고나서 삭제하려고 한다.
+이렇게 하는 이유는 사용자가 실수로 삭제하는 것을 방지하기 위해서이다.
+
+사용자에게 한 번 더 확인을 요청하기 위해 모달 컴포넌트를 만들겠다. 모달(Modal)이란 페이지에 나타난 내용 위에
+새 레이어로 어떠한 창을 보여 주는 것을 말한다.
+
+이 프로젝트에서는 모달 컴포넌트를 포스트 읽기 페이지에서만 사용하지만, 컴포넌트의 재사용성을 고려하여 common 디렉터리에 만든다.
+
+AskModal 이라는 컴포넌트를 다음과 같이 만든다.
+
+
+import React from 'react';
+import styled from 'styled-components';
+import Button from './Button';
+
+const FullScreen = styled.div`
+    position: fixed;
+    z-index: 30;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.25);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+`;
+
+const AskModalBlock = styled.div`
+    width: 320px;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 4px;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.125);
+    h2 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+    }
+    p {
+        margin-bottom: 3rem;
+    }
+    .buttons {
+        display: flex;
+        justify-content: flex-end;
+    }
+`;
+
+const StyledButton = styled(Button)`
+    height: 2rem;
+    & + & {
+        margin-left: 0.75rem;
+    }
+`;
+
+const AskModal = ({
+    visible,
+    title,
+    description,
+    confirmText = '확인',
+    cancelText = '취소',
+    onConfirm,
+    onCancel,
+}) => {
+    if(!visible) return null;
+    return (
+        <FullScreen>
+            <AskModalBlock>
+                <h2>{title}</h2>
+                <p>{description}</p>
+                <div className="buttons">
+                    <StyledButton onClick={onCancel}>{cancelText}</StyledButton>
+                    <StyledButton cyan onClick={onConfirm}>
+                        {confirmText}
+                    </StyledButton>
+                </div>
+            </AskModalBlock>
+        </FullScreen>
+    );
+};
+
+export default AskModal;
+
+
+방금 만든 AskModal 을 기반으로 post 디렉터리에 AskRemoveModal 이라는 컴포넌트를 만들어 보자.
+
+
+import React from 'react';
+import AskModal from '../common/AskModal';
+
+const AskRemoveModal = ({ visible, onConfirm, onCancel }) => {
+    return (
+        <AskModal
+            visible={visible}
+            title="포스트 삭제"
+            description="포스트를 정말 삭제하시겠습니까?"
+            confirmText="삭제"
+            onConfirm={onConfirm}
+            onCancel={onCancel}
+            />
+    );
+};
+
+export default AskRemoveModal;
+
+
+AskRemoveModal 컴포넌트를 굳이 이렇게 별도의 파일로 분리하여 만들어 줄 필요는 없다.
+그냥 모달을 사용하는 곳에서 AskModal 을 직접 렌더링해도 상관없다. 다만, 모달별로 이렇게 파일을 만들어 주면 나중에
+모달의 개수가 많아졌을 때 관리하기가 매우 편해진다.
+
+컴포넌트를 다 만들었으면 PostActionButtons 내부에서 사용해 본다.
+
+
+import React, { useState, useCallback } from 'react';
+import styled from 'styled-components';
+import palette from '../../lib/styles/palette';
+import AskRemoveModal from './AskRemoveModal';
+
+...
+
+const PostActionButtons = ({ onEdit, onRemove }) => {
+    const [modal, setModal] = useState(false);
+    const onRemoveClick = () => {
+        setModal(true);
+    };
+    const onCancel = () => {
+        setModal(false);
+    };
+    const onConfirm = () => {
+        setModal(false);
+        onRemove();
+    }
+
+    return (
+        <>
+            <PostActionButtonsBlock>
+                <ActionButton onClick={onEdit}>수정</ActionButton>
+                <ActionButton onClick={onRemoveClick}>삭제</ActionButton>
+            </PostActionButtonsBlock>
+            <AskRemoveModal
+                visible={modal}
+                onConfirm={onConfirm}
+                onCancel={onCancel}
+                />
+        </>
+    );
+};
+
+export default PostActionButtons;
+
+
+이제 삭제 버튼을 눌러보자. 모달이 나타날 것이다. 취소 버튼을 눌러서 모달이 사라지는 것도 확인해 보자.
+모달에서 삭제버튼을 누르면 오류가 발생할 것이다. 아직 onRemove를 넣어 주지 않았기 때문이다.
+
+onRemove 를 구현하기에 앞서 lib/api/posts.js 파일에 removePost 함수를 구현해 주자.
+
+
+...
+
+export const removePost = id => client.delete(`/api/posts/${id}`);
+
+
+이제 PostViewer 에서 onRemove 함수를 만들어 removePost를 호출하도록 구현해 보겠다.
+removePost의 경우에는 API를 요청한 후 따로 보여 주어야 할 결과가 없으니 리덕스 액션과 사가를 만드는 작업을 생략하고
+바로 API를 사용하겠다.
+
+
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from "react-redux";
+import { withRouter } from "react-router-dom";
+import { readPost, unloadPost } from "../../modules/post";
+import PostViewer from '../../components/post/PostViewer';
+import PostActionButtons from '../../components/post/PostActionButtons';
+import { setOriginalPost } from "../../modules/write";
+import { removePost } from "../../lib/api/posts";
+
+const PostViewerContainer = ({ match, history }) => {
+    ...
+
+    const onRemove = async () => {
+        try {
+            await removePost(postId);
+            history.push('/');  // 홈으로 이동
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    const ownPost = (user && user._id) === (post && post.user._id);
+
+    return (
+        <PostViewer 
+            post={post} 
+            loading={loading} 
+            error={error} 
+            actionButtons={ownPost && <PostActionButtons onEdit={onEdit} onRemove={onRemove} />}
+            />
+    );
+};
+
+export default withRouter(PostViewerContainer);
+
+
+컴포넌트 수정이 끝나고 나면, 다시 삭제 버튼을 눌러서 모달을 열고 삭제 버튼을 눌러보자.
+홈화면으로 이동하였다면 삭제한 포스트가 사라졌는지도 확인해보자.
+
+이로서 프로젝트를 모두 구현하였다.

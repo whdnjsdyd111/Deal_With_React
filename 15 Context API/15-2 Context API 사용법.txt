@@ -1,0 +1,154 @@
+            15.2 Context API 사용법 익히기
+
+본격적으로 Context API를 사용하는 방법을 배워보자.
+먼저 연습할 리액트 프로젝트를 새로 생성한다.
+
+
+$ yarn create react-app context-tutorial
+
+
+        15.2.1 새 Context 만들기
+
+프로젝트를 생성한 후, 새로운 Context를 만들어보자.
+src 디렉터리에 contexts 디렉터리를 만든 뒤 그 안에 color.js 라는 파일을 만들자.
+Context를 만들 때 반드시 contexts 디렉터리에 만들 필요는 없다. 다만, 다른 파일과 구분하기 위해 따로 디렉터리를 만들었으니,
+추후 Context를 사용할 때는 마음대로 경로를 지정해도 상관없다.
+파일을 만들었으면 다음 코드를 입력해 보자.
+
+
+import { createContext } from "react";
+
+const ColorContext = createContext({ color: 'black' });
+
+export default ColorContext;
+
+
+새 Context를 만들 때는 createContext 함수를 사용한다. 파라미터에는 해당 Context 의 기본 상태를 지정한다.
+
+
+        15.2.2 Consumer 사용하기
+
+이번에는 ColorBox 라는 컴포넌트를 만들어서 ColorContext 안에 들어 있는 색상을 보여준다.
+이때 색상을 props로 받아 오는 것이 아니라 ColorContext 안에 들어 있는 Consumer 라는 컴포넌트를 통해 색상을 조회할 것이다.
+
+src 디렉터리에 components 디렉터리를 만들고, 그 안에 ColorBox.js 파일을 생성하여 다음 코드를 입력해보자.
+
+
+import React from 'react';
+import ColorContext from '../contexts/color';
+
+const ColorBox = () => {
+    return (
+        <ColorContext.Consumer>
+            {value => (
+                <div
+                    style={{
+                        width: '64px',
+                        height: '64px',
+                        background: value.color
+                    }}
+                    />
+            )}
+        </ColorContext.Consumer>
+    );
+};
+
+export default ColorBox;
+
+
+Consumer 사이에 중괄호를 열어서 그 안에 함수를 넣어 주었다.
+이러한 패턴을 Function as a child, 혹은 Render Props 라고 한다.
+컴포넌트의 children이 있어야 할 자리에 일반 JSX 혹은 문자열이 아닌 함수를 전달하는 것이다.
+
+
+    노트 Render Props 예제
+
+Render Props 패턴이 헷갈린다면 다음 예제를 살펴보자. 이해하는 데 도움이 될 것이다.
+
+
+import React from 'react'
+
+const RenderPropsSample = ({ children }) => {
+    return <div>결과: {children(5)}</div>;
+}
+
+export default RenderPropsSample;
+
+
+위와 같은 컴포넌트가 있다면 추후 사용할 때 다음과 같이 사용할 수 있다.
+
+
+<RenderPropsSample>{value => 2 * value}</RenderPropsSample>
+
+
+RenderPropsSample에게 children props로 파라미터에 2를 곱해서 반환하는 함수를 전달하면
+해당 컴포넌트에서는 이 함수에 5를 인자로 넣어서 "결과: 10" 을 렌더링한다.
+
+
+컴포넌트를 다 만들었다면 App에서 렌더링하자.
+
+
+import React from 'react';
+import ColorBox from './components/ColorBox';
+
+const App = () => {
+  return (
+    <div>
+      <ColorBox />
+    </div>
+  );
+};
+
+export default App;
+
+
+이제 서버를 열어 확인해보자.
+
+
+        15.2.3 Provider
+
+Provider 를 사용하면 Context의 value를 변경할 수 있다.
+App 컴포넌트를 다음과 같이 수정해보자.
+
+
+import React from 'react';
+import ColorBox from './components/ColorBox';
+import ColorContext from './contexts/color';
+
+const App = () => {
+  return (
+    <ColorContext.Provider value={{ color: 'red' }}>
+      <div>
+        <ColorBox />
+      </div>
+    </ColorContext.Provider>
+  );
+};
+
+export default App;
+
+
+기존에 createContext 함수를 사용할 때는 파라미터로 Context의 기본값을 넣어 주었다.
+이 기본값은 Provider를 사용하지 않았을 때만 사용된다. 만약 Provider는 사용했는데 value를 명시하지 않았다면,
+이 기본값을 사용하지 않기 때문에 오류가 발생한다.
+다음 코드는 오류가 발생하는 코드이다.
+
+
+import React from 'react';
+import ColorBox from './components/ColorBox';
+import ColorContext from './contexts/color';
+
+const App = () => {
+  return (
+    <ColorContext.Provider>
+      <div>
+        <ColorBox />
+      </div>
+    </ColorContext.Provider>
+  );
+};
+
+export default App;
+
+
+Provider를 사용할 때는 value 값을 명시해 주어야 제대로 작동한다는 것을 꼭 기억하자.

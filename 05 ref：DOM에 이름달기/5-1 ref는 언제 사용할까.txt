@@ -1,0 +1,161 @@
+            5.1 ref는 어떤 상황에서 사용해야 할까?
+
+먼저 ref는 어떤 상황에서 사용해야 하는지 짚고 가자.
+일단 특정 DOM에 작업을 해야할 때 ref을 사용한다는 것은 파악했다.
+하지만 어떤 작업을 할때 ref를 사용해야 할까?
+
+정답은 'DOM을 꼭 직접 건드려야 할 때'이다. 예를 들어 일반 순수 자바스크립트 및 jQuery로 만든 웹 사이트에서
+input 을 검증할 때 다음과 같이 특정 id를 가진 input에 클래스를 설정해준다.
+
+
+예제 코드(http://jsbin.com/qawucezuci/edit)
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Example</title>
+  <style>
+    .success {
+      background-color: lightgreen;
+    }
+
+    .failure {
+      background-color: lightcoral;
+    }
+  </style>
+  <script>
+    function validate() {
+      var input = document.getElementById('password');
+      input.className='';
+      if(input.value==='0000') {
+        input.className='success';
+      } else {
+        input.className='failure';
+      }
+    }
+  </script>
+</head>
+<body>
+  <input type="password" id="password"></input>
+  <button onclick="validate()">Validate</button>
+</body>
+</html>
+
+
+하지만 리액트에선 이런 작업은 굳이 DOM에 접근하지 않아도 state로 구현할 수 있다.
+리액트 컴포넌트에서 state를 사용하여 제시한 기능을 한번 구현해보자.
+
+이 장에선 클래스형 컴포넌트에서 ref를 사용하는 방법을 알아본다.
+함수형 컴포넌트에서 ref를 사용하려면 Hooks를 사용해야 하기 때문에 8장에서 Hooks를 배우면서 알아본다.
+이번 실습의 흐름은 다음과 같다.
+
+
+    ValidationSample 컴포넌트 만들기
+                ↓
+    input에 ref 달기
+                ↓
+    버튼을 누를 때마다 input에 포커스 추가
+
+
+        5.1.1 예제 컴포넌트 생성
+
+src 디렉터리 안에 ValidationSample.css와 ValidationSample.js 파일을 만들어 주자.
+
+
+.success {
+  background-color: lightgreen;
+}
+
+.failure {
+  background-color: lightcoral;
+}
+
+
+import React, { Component } from 'react';
+import './ValidationSample.css';
+
+class ValidationSample extends Component {
+
+    state = {
+        password: '',
+        clicked: false,
+        validated: false
+    }
+
+    handleChange = (e) => {
+        this.setState({
+            password: e.target.value
+        });
+    }
+
+    handleButtonClick = () => {
+        this.setState({
+            clicked: true,
+            validated: this.state.password === '0000'
+        })
+    }
+
+    render() {
+        return (
+            <div>
+                <input
+                    type="password"
+                    value={this.state.password}
+                    onChange={this.handleChange}
+                    className={this.state.clicked ? (this.state.validated ? 'success': 'failure') : ''}
+                    />
+                <button onClick={this.handleButtonClick}>검증하기</button>
+            </div>
+        );
+    }
+}
+
+export default ValidationSample;
+
+
+input 에서는 onChange 이벤트가 발생하면 handleChange를 호출하여 state의 password 값을 업데이트하게 한다.
+button에서는 onClick 이벤트가 발생하면 handleButtonClick을 호출하여 clicked 값을 참으로 설정했고,
+validated 값을 검증 결과로 설정했다.
+
+input의 className 값은 버튼을 누르기 전에는 비어 있는 문자열을 전달하며, 버튼을 누른 후에는 검증 결과에 따라
+success 값 또는 failue 값을 설정한다. 그리고 이 값에 따라 input 색상이 초록 또는 빨간색으로 나타난다.
+
+
+        5.1.2 App 컴포넌트에서 예제 컴포넌트 렌더링
+
+App 컴포넌트에서 ValidationSample 컴포넌트를 불러와 렌더링해보자.
+그 과정에서, App 컴포넌트를 함수형 컴포넌트에서 클래스형 컴포넌트로 전환해주자.
+우리가 추후 App 컴포넌트에서 ref 를 사용할 것이기 때문에 미리 클래스형 컴포넌트로 작성한다.
+
+
+import React, { Component } from 'react';
+import ValidationSample from './ValidationSample';
+
+class App extends Component {
+  render() {
+    return (
+      <ValidationSample />
+    );
+  }
+}
+
+export default App;
+
+
+코드를 저장하고 결과물을 확인해보자.
+
+
+        5.1.3 DOM을 꼭 사용해야 하는 상황
+
+앞서 state를 사용하여 필요한 기능을 구현했는데, 가끔 state만으로 해결할 수 없는 기능이 있다.
+어떤 상황인지 보자.
+
+
+    - 특정 input에 포커스 주기
+    - 스크롤 박스 조작하기
+    - Canvas 요소에 그림 그리기 등
+
+
+이때는 어쩔 수 없이 DOM에 직접적으로 접근해야 하는데, 이를 위해 바로 ref를 사용하는 것이다.

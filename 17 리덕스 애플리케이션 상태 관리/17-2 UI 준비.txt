@@ -1,0 +1,137 @@
+            17.2 UI 준비하기
+
+리액트 프로젝트에서 리덕스를 사용할 때 가장 많이 사용하는 패턴은 프레젠테이셔널 컴포넌트와 컨테이너 컴포넌트를 분리하는 것이다.
+여기서 프레젠테이셔널 컴포넌트란 주로 상태 관리가 이루어지지 않고, 그저 props를 받아 와서 화면에 UI를 보여 주기만 하는 컴포넌트를 말한다.
+이와 달리 컨테이너 컴포넌트는 리덕스와 연동되어 있는 컴포넌트로, 리덕스로부터 상태를 받아 오기도 하고
+리억스 스토어에 액션을 디스패치 하기도 한다.
+
+이러한 패턴은 리덕스를 사용하는 데 필수 사항은 아니다.
+다만 이 패턴을 사용하면 코드의 재사용성도 높아지고, 관심사의 분리가 이루어져 UI를 작성할 때 좀 더 집중할 수 있다.
+
+
+                ┌─────스토어 상태────┐
+                ↓                   ↓
+    컨테이너 컴포넌트           리덕스 스토어
+        │       │                   ↑       
+        │       └─────액션 디스패치 ─┘
+       props
+        ↓
+    프레젠테이셔널 컴포넌트
+
+
+이 장의 프로젝트에서는 이 패턴을 사용하여 코드를 작성해 보겠다.
+UI에 관련된 프레젠테이셔널 컴포넌트는 src/components 경로에 저장하고, 
+리덕스와 연동된 컨테이너 컴포넌트는 src/containers 컴포넌트에 작성한다.
+
+
+        17.2.1 카운터 컴포넌트 만들기
+
+숫자를 더하고 뺄 수 있는 카운터 컴포넌트를 만들어 보자. components 디렉터리를 생성한 뒤, 그 안에 Counter 컴포넌트를 작성한다.
+
+
+import React from 'react';
+
+const Counter = ({ number, onIncrease, onDecrease }) => {
+    return (
+        <div>
+            <h1>{number}</h1>
+            <div>
+                <button onClick={onIncrease}>+1</button>
+                <button onClick={onDecrease}>-1</button>
+            </div>
+        </div>
+    )
+}
+
+export default Counter;
+
+
+이제 이 컴포넌트를 App 컴포넌트에서 렌더링한다.
+
+
+import React from 'react';
+import Counter from './components/Counter';
+
+const App = () => {
+  return (
+    <div>
+      <Counter number={0} />
+    </div>
+  )
+}
+
+export default App;
+
+
+yarn start로 서버를 실행하여 확인해보자.
+
+
+        17.2.2 할 일 목록 컴포넌트 만들기
+
+이번에는 해야 할 일을 추가하고, 체크하고, 삭제할 수 있는 할 일 목록 컴포넌트를 만들어 보겠다.
+components 디렉터리에 Todos 컴포넌트를 다음과 같이 작성해보자.
+
+
+import React from 'react';
+
+const TodoItem = ({ todo, onToggle, onRemove }) => {
+    return (
+        <div>
+            <input type="checkbox" />
+            <span>예제 테스트</span>
+            <button>삭제</button>
+        </div>
+    );
+};
+
+const Todos = ({
+    input,  // 인풋에 입력되는 텍스트
+    todos,  // 할 일 목록이 들어 있는 객체
+    onChangeInput,
+    onInsert,
+    onRemove
+}) => {
+    const onSubmit = e => {
+        e.preventDefault();
+    };
+    return (
+        <div>
+            <form onSubmit={onSubmit}>
+                <input />
+                <button type="submit">등록</button>
+            </form>
+            <div>
+                <TodoItem />
+                <TodoItem />
+                <TodoItem />
+                <TodoItem />
+                <TodoItem />
+            </div>
+        </div>
+    );
+};
+
+export default Todos;
+
+
+파일 하나를 두 컴포넌트를 선언했다. 취향에 따라 Todos 컴포넌트와 TodoItem 컴포넌트를 파일 두 개로 분리해도 되고,
+위 코드처럼 하나에 작성해도 무방하다.
+위 컴포넌트들이 받아 오는 props는 나중에 사용하겠다.
+컴포넌트를 다 만들었다면 App 컴포넌트에서 카운터 아래에 렌더링해 주자. hr 태그를 사용하여 사이에 구문선을 그려 주겠다.
+
+
+import React from 'react';
+import Counter from './components/Counter';
+import Todos from './components/Todos';
+
+const App = () => {
+  return (
+    <div>
+      <Counter number={0} />
+      <hr />
+      <Todos />
+    </div>
+  )
+}
+
+export default App;

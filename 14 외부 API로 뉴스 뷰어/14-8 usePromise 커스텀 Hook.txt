@@ -1,0 +1,106 @@
+            14.8 usePromise 커스텀 Hook 만들기
+
+이번에는 컴포넌트에서 API 호출처럼 Promise를 사용해야 하는 경우 더욱 간결하게 코드를 작성할 수 있도록 해 주는
+커스텀 Hook을 만들어서 프로젝트에 적용해 보자.
+
+앞으로 만들 Hook의 이름은 usePromise이다. src 디렉터리에 lib 디렉터리를 만들고, 그 안에 usePromise.js를 작성해보자.
+
+
+import { useState, useEffect } from "react";
+
+export default function usePromise(promiseCreator, deps) {
+    // 대기 중/완료/실패에 대한 상태 관리
+    const [loading, setLoading] = useState(false);
+    const [resolved, setResolved] = useState(null);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const process = async () => {
+            setLoading(true);
+            try {
+                const resolved = await promiseCreator();
+                setResolved(resolved);
+            } catch(e) {
+                setError(e);
+            }
+            setLoading(false);
+        };
+        process();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, deps);
+
+    return [loading, resolved, error];
+}
+
+
+프로젝트의 다양한 곳에서 사용될 수 있는 유틸 함수들은 보통 이렇게 src 디렉터리에 lib 디렉터리를 만들고 그 안에 작성한다.
+
+방금 만든 usePromise Hook 은 Promise의 대기 중, 완료 결과, 실패 결과에 대한 상태를 관리하며, 
+usePromise의 의존 배열 deps를 파라미터로 받아온다. 파라미터로 받아온 deps 배열은 usePromise 내부에서 사용한
+useEffect의 의존 배열로 설정되며, 이 배열을 설정하는 부분에서 ESLint 경고가 나타나게 된다.
+
+이 경고를 무시하려면 특정 줄에서만 ESLint 규칙을 무시하도록 주석을 작성해주어야 한다.
+에디터에 초록색 경고 줄이 그어졌을 때 그 위에 커서를 올리면 빠른 수정... 이라는 문구가 나타나는데, 이를 클릭하면
+자동으로 ESLint 규칙을 비활성화시켜주는 주석을 입력할 수 있다.
+
+코드를 저장하고 NewsList 컴포넌트에서 usePromise 를 사용해 보자.
+
+
+import React from 'react';
+import styled from 'styled-components';
+import NewsItem from './NewsItem';
+import axios from 'axios'
+import usePromise from "../lib/usePromise";
+
+const NewsListBlock = styled.div`
+    box-sizing: border-box;
+    padding-bottom: 3rem;
+    width: 768px;
+    margin: 0 auto;
+    margin-top: 2rem;
+    @media screen and (max-width: 768px) {
+        width: 100%;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+`;
+
+const NewsList = ({ category }) => {
+    const [loading, response, error] = usePromise(() => {
+        const query = category === 'all' ? '' : `&category=${category}`;
+        return axios.get(
+            `https://newsapi.org/v2/top-headlines?country=kr${query}&apiKey=08d076dd85844f5d8cf5ce3061ebdc95`
+        );
+    }, [category]);
+
+    // 대기 중일 때
+    if(loading) {
+        return <NewsListBlock>대기 중 ...</NewsListBlock>;
+    }
+    // 아직 response 값이 설정되지 않았을 때
+    if(!response) {
+        return null;
+    }
+
+    // 에러가 발생했을 때
+    if(error) {
+        return <NewsListBlock>에러 발생!</NewsListBlock>
+    }
+
+    // response 값이 유효할 때
+    const { articles } = response.data;
+    return (
+        <NewsListBlock>
+            {articles.map(article => (
+                <NewsItem key={articles.url} article={article} />
+            ))}
+        </NewsListBlock>
+    );
+};
+
+export default NewsList;
+
+
+usePromise를 사용하면 NewsList 에서 대기 중 상태 관리와 useEffect 설정을 직접 하지 않아도 되므로 코드가 훨씬 간결해진다.
+요청 상태를 관리할 때 무조건 커스텀 Hook을 만들어서 사용해야 하는 것은 아니지만, 상황에 따라 적절히 사용하면
+좋은 코드를 만들어갈 수 있다.

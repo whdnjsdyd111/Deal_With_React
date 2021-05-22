@@ -1,0 +1,27 @@
+            17.1 작업 환경 설정
+
+리액트 프로젝트를 생성하고, 해당 프로젝트에 리덕스를 적용해 본다.
+먼저 create-react-app을 사용하여 새로운 리액트 프로젝트를 생성하자.
+
+
+$ yarn create react-app react-redux-tutorial
+
+
+생성한 프로젝트 디렉터리에 yarn 명령어를 사용하여 리덕스와 react-redux 라이브러리를 설치하자.
+
+
+$ cd react-redux-tutorial
+$ yarn add redux react-redux
+
+
+Prettier 를 적용하고 싶다면 디렉터리에 다음과 같이 .prettierrc 파일을 작성하자.
+
+
+{
+    "singleQuote": true,
+    "semi": true,
+    "useTabs": false,
+    "tabWidth": 2,
+    "trailingComma": "all",
+    "printWidth": 80
+}

@@ -1,0 +1,46 @@
+            11.1 많은 데이터 렌더링하기
+
+우선 실제로 랙(lag)을 경험할 수 있도록 많은 데이터를 렌더링 해보자.
+물론 데이터를 하나하나 직접 입력하지 않고 코드를 사용하여 쉽게 추가할 것이다.
+
+App 컴포넌트를 다음과 같이 수정해본다.
+
+
+import React, { useState, useRef, useCallback } from 'react';
+import TodoTemplate from './components/TodoTemplate';
+import TodoInsert from './components/TodoInsert';
+import TodoList from './components/TodoList';
+
+function createBulkTodos() {
+  const array = [];
+  for(let i = 1; i <= 2500; i++) {
+    array.push({
+      id: i,
+      text: `할 일 ${i}`,
+      checked: false,
+    })
+  }
+  return array;
+}
+
+const App = () => {
+  const [todos, setTodos] = useState(createBulkTodos);
+
+  // 고유값으로 사용될 id
+  // ref를 사용하여 변수 담기
+  const nextId = useRef(2501);
+
+  (...);
+};
+
+export default App;
+
+
+데이터를 하나하나 직접 입력할 수는 없으므로 createBulkTodos 라는 함수를 만들어서 데이터 2500개를 자동으로 생성했다.
+
+여기서 주의할 점은 useState의 기본값에 함수를 넣었다는 것이다. 여기서 useState(createBulkTodos())라고 작성하면
+리렌더링될 때마다 createBulkTodos 함수가 호출되지만, useState(createBulkTodos) 처럼 파라미터를 함수 형태로 넣어 주면
+컴포넌트가 처음 렌더링될 때만 createBulkTodos 함수가 실행될 것이다.
+
+자, 이제 코드를 저장하면 2500개의 데이터가 나타난다.
+2500개가 렌더링되었다면 하나를 체크해보자. 느려진 것이 느껴질 것이다.

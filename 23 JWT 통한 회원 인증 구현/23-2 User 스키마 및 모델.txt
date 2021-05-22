@@ -1,0 +1,110 @@
+            23.2 User 스키마/모델 만들기
+
+User 스키마와 모델을 작성하여 사용자의 정보를 MongoDB에 담고 조회해 본다.
+앞으로 만들 사용자 스키마에는 사용자 계정명과 비밀번호가 필요하다.
+비밀번호를 데이터베이스에 저장할 때 플레인(아무런 가공도 하지 않은) 텍스트로 저장하면 보안상 매우 위험하다.
+따라서 단방향 해싱 함수를 지원해 주는 bcrypt 라는 라이브러리를 사용하여 비밀번호를 안전하게 저장하겠다.
+우선 models 디렉터리에 user.js 파일을 생성하자. 그리고 다음 스키마를 작성한다.
+
+
+import mongoose, { Schema } from 'mongoose';
+
+const UserSchema = new Schema({
+    username: String,
+    hashedPassword: String,
+});
+
+const User = mongoose.model('User', UserSchema);
+export default User;
+
+
+다음으로 해시를 만드는 함수와 해시를 검증하는 함수를 만들어 보겠다. 먼저 bcrypt를 설치해 준다.
+
+
+$ yarn add bcrypt
+
+
+        23.2.1 모델 메소드 만들기
+
+모델 메소드는 모델에서 사용할 수 있는 함수를 의미하며, 두 가지 종류가 있다.
+첫 번째는 인스턴스 메소드로, 모델을 통해 만든 문서 인스턴스에서 사용할 수 있는 함수를 의미한다.
+
+
+예시 코드
+const user = new User({ username: 'velopert' });
+user.setPassword('mypass123');
+
+
+두 번째 스태틱(static) 메소드로, 모델에서 바로 사용할 수 있는 함수를 의미한다.
+
+
+const user = User.findByUsername('velopert');
+
+
+    23.2.1.1 인스턴스 메소드 만들기
+
+우리는 두 개의 인스턴스 메소드를 만들어 보겠다. 첫 번째 메소드는 setPassword 이다. 이 메소드를 통해 비밀번호를 파라미터로
+받아서 계정의 hashedPassword 값을 설정해 준다. 두 번째 메소드는 checkPasword 이다.
+이 메소드는 파라미터로 받은 비밀번호가 해당 계정의 비밀번호와 일치하는지 검증해 준다.
+
+
+import mongoose, { Schema } from 'mongoose';
+import bcrypt from 'bcrypt';
+
+const UserSchema = new Schema({
+    username: String,
+    hashedPassword: String,
+});
+
+UserSchema.methods.setPassword = async function(password) {
+    const hash = await bcrypt.hash(password, 10);
+    this.hashedPassword = hash;
+}
+
+UserSchema.methods.checkPassword = async function(password) {
+    const result = await bcrypt.compare(password, this.hashedPassword);
+    return result;  // true / false
+}
+
+const User = mongoose.model('User', UserSchema);
+export default User;
+
+
+인스턴스 메소드를 작성할 때는 화살표 함수가 아닌 function 키워드를 사용하여 구현해야 한다.
+함수 내부에서 this에 접근해야 하기 때문이다. 여기서 this는 문서 인스턴스를 가지킨다.
+화살표 함수를 사용하면 this는 문서 인스턴스를 가리키지 못하게 된다.
+
+
+        23.2.2 스태틱 메소드 만들기
+
+이번에는 스태틱 메소드를 만들어 본다. findByUsername이라는 메소드를 작성할 텐데,
+이 메소드는 username 으로 데이터를 찾을 수 있게 해 준다.
+
+
+import mongoose, { Schema } from 'mongoose';
+import bcrypt from 'bcrypt';
+
+const UserSchema = new Schema({
+    username: String,
+    hashedPassword: String,
+});
+
+UserSchema.methods.setPassword = async function (password) {
+    const hash = await bcrypt.hash(password, 10);
+    this.hashedPassword = hash;
+};
+
+UserSchema.methods.checkPassword = async function (password) {
+    const result = await bcrypt.compare(password, this.hashedPassword);
+    return result; // true / false
+};
+
+UserSchema.statics.findByUsername = function (username) {
+    return this.findOne({ username });
+};
+
+const User = mongoose.model('User', UserSchema);
+export default User;
+
+
+스태틱 함수에서의 this는 모델을 가리킨다. 지금 여기서는 User를 가리킨다.

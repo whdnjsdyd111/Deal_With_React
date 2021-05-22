@@ -1,0 +1,4 @@
+            28.2 책의 연장선
+
+책에서 다루지 못한 UI 테스팅, 타입 설정하는 TypeScript 등 자료는 (https://velog.io/@velopert)에서 볼 수 있다.
+페이스북 페이지(https://www.facebook.com/velopert)에 새로운 내용을 계속 올릴 예정이다.

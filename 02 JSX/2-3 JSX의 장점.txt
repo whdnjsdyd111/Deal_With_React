@@ -1,0 +1,38 @@
+            2.3 JSX의 장점
+
+        2.3.1 보기 쉽고 익숙하다
+
+일반 자바스크립트만 사용한 코드와 JSX와 비교하면 JSX를 사용하는 편이 더 가독성이 높고 작성하기 쉽다.
+HTML와 비슷한데 이것이 JSX를 사용하는 주된 이유다.
+자바스크립트로 요소들을 일일이 만들어야 한다면 불편할 것이다.
+
+
+        2.3.2 더욱 높은 활용도
+
+JSX 에서는 우리가 알고 있는 div 나 span 같은 HTML 태그를 사용할 수 있을 뿐만 아니라,
+앞으로 만들 컴포넌트도 JSX 안에서 작성할 수 있다. App.js 에서는 App 컴포넌트가 만들어졌는데
+src/index.js 파일을 열어보면 이 App 컴포넌트를 마치 HTML 태그 쓰듯이 그냥 작성한다.
+
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+
+ReactDOM.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  document.getElementById('root')
+);
+
+
+    노트 ReactDOM.render
+
+컴포넌트를 페이지에 렌더링하는 역할을 하며, react-dom 모듈을 불러와 사용할 수 있다.
+
+    노트 React.StrictMode
+
+리액트 프로젝트에서 리액트의 레거시 기능들을 모두 사용하지 못하게 하는 기능이다.
+이를 사용하면 옛날 기능을 사용했을 때 경고를 출력해준다.

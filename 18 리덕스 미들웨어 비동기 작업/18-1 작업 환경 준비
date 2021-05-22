@@ -1,0 +1,139 @@
+            18.1 작업 환경 준비
+
+리덕스를 적용한 간단한 리액트 프로젝트를 준비한다. 이 프로젝트를 통해 리덕스 미들웨어에 대해 알아볼 것이다.
+CRA(create-react-app)를 사용하여 새 리액트 프로젝트를 생성하자.
+
+
+$ yarn create react-app learn-redux-middleware
+
+
+다음으로 리덕스를 사용하여 카운터를 구현한다. 이에 필요한 라이브러리들을 새 프로젝트에 설치해 준다.
+
+
+$ yarn add redux react-redux redux-actions
+
+
+이제 리덕스를 위한 코드를 준비한다. 먼저 counter 리덕스 모듈을 작성한다.
+
+
+import { createAction, handleActions } from "redux-actions";
+
+const INCREASE = 'counter/INCREASE';
+const DECREASE = 'counter/DECREASE';
+
+export const increase = createAction(INCREASE);
+export const decrease = createAction(DECREASE);
+
+const initialState = 0; // 상태는 꼭 객체일 필요가 없다. 숫자도 작동한다.
+
+const counter = handleActions(
+    {
+        [INCREASE]: state => state + 1,
+        [DECREASE]: state => state - 1
+    },
+    initialState
+);
+
+export default counter;
+
+
+다음으로 루트 리듀서를 생성한다.
+
+
+import { combineReducers } from "redux";
+import counter from './counter';
+
+const rootReducer = combineReducers({
+    counter
+});
+
+export default rootReducer;
+
+
+리듀서를 다 만들었으면 src 디렉터리의 index.js에서 스토어를 생성한 후, Provider로 리액트 프로젝트에 리덕스를 적용하자.
+
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import { createStore } from "redux";
+import { Provider } from "react-redux";
+import rootReducer from './modules';
+
+const store = createStore(rootReducer);
+
+ReactDOM.render(
+  <Provider store={store}>
+    <App />
+  </Provider>,
+  document.getElementById('root')
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+
+
+
+이어서 카운터 컴포넌트와 카운터 컨테이너 컴포넌트를 만든다.
+프레젠테이셔널 컴포넌트는 components 디렉터리에 저장하고, 컨테이너 컴포넌트는 containers 디렉터리에 저장한다.
+
+
+import React from 'react';
+
+const Counter = ({ onIncrease, onDecrease, number }) => {
+    return (
+        <div>
+            <h1>{number}</h1>
+            <button onClick={onIncrease}>+1</button>
+            <button onClick={onDecrease}>-1</button>
+        </div>
+    );
+};
+
+export default Counter;
+
+
+import React from 'react';
+import { connect } from "react-redux";
+import { increase, decrease } from "../modules/counter";
+import Counter from '../components/Counter';
+
+const CounterContainer = ({ number, increase, decrease }) => {
+    return (
+        <Counter number={number} onIncrease={increase} onDecrease={decrease} />
+    );
+};
+
+export default connect(
+    state => ({
+        number: state.counter
+    }),
+    {
+        increase,
+        decrease
+    }
+)(CounterContainer);
+
+
+다 만들었다면 App 에서 CounterContainer를 렌더링하여 잘 작동하는지 확인해 보자.
+
+
+import React from 'react';
+import CounterContainer from './containers/CounterContainer';
+
+const App = () => {
+  return (
+    <div>
+      <CounterContainer />
+    </div>
+  );
+};
+
+export default App;
+
+
+이제 yarn start 명령어를 입력하여 브라우저에서 확인해보자.

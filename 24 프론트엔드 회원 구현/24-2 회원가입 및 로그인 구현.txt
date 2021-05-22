@@ -1,0 +1,1883 @@
+            24.2 회원가입과 로그인 구현
+
+지금부터는 서비스에서 회원가입 기능과 로그인 기능을 구현한다. 먼저 UI 부터 개발한 다음에 리덕스를 통해
+상태 관리 및 API 요청을 구현한다.
+
+
+        24.2.1 UI 준비하기
+
+나중에 리덕스를 사용하여 컨테이너 컴포넌트를 만들고 상태 관리도 하겠지만, 지금 당장은 상태에 대해
+신경 쓰지 않고 오직 UI만 개발한다.
+
+프레젠테이셔널 컴포넌트들은 components 디렉터리에 작성하고, 그 안에 기능별로 디렉터리를 새로 만들어서
+컴포넌트를 분루할 것이다. 앞에서 Button 컴포넌트를 common 이란 디렉터리에 만들었는데,
+이미 설명했듯이 Button 컴포넌트는 여기저기 재사용되는 컴포넌트이므로 common 디렉터리에 넣은 것이다.
+회원 인증에 관련된 컴포넌트는 회원 인증 페이지에서만 사용되기 때문에 auth 라는 디렉터리를 만들어서 그 안에 작성한다.
+이 외에도 글쓰기에 관련된 컴포넌트는 write라는 디렉터리에 작성하고, 포스트 읽기에 관련된 컴포넌트는 post 디렉터리에 작성할 것이다.
+
+회원가입과 로긍인 기능을 구현하기 위해 만들어야 할 프레젠테이셔널 컴포넌트는 두 개이다.
+먼저 다음 파일들을 생성한다. 각 컴포넌트의 역할이 무엇인지는 주석에 간략하게 적혀 있으니 주석도 꼼꼼히 읽어 준다.
+
+AuthForm 컴포넌트를 작성한다.
+
+
+import React from 'react';
+import styled from 'styled-components';
+
+/*
+    회원가입 또는 로그인 폼을 보여 준다.
+*/
+
+const AuthFormBlock = styled.div``;
+
+const AuthForm = () => {
+    return (
+        <AuthFormBlock>
+            AuthForm
+        </AuthFormBlock>
+    );
+};
+
+export default AuthForm;
+
+
+앞으로 컴포넌트를 만들 때는 styled-components로 스타일링할 것이다. 이 책에서는 각 컴포넌트의 최상위 컴포넌트를 선언할 때
+이름 뒤에 Block 이라는 단어를 붙여 줄 텐데, 보통 styled-components를 사용할 때 꼭 Block이 아니어도 
+Wrapper라는 단어를 붙이거나, 또는 이름앞에 Styled 라는 단어를 붙이기도 한다. StyledAuthForm 처럼 말이다.
+나중에 여러분이 프로젝트에서 styled-components를 사용할 때는 더 편한 네이밍 방식을 자유롭게 선택하여 이름을 지어보자.
+그럼 이제 AuthTemplate 컴포넌트를 작성한다.
+
+
+import React from 'react';
+import styled from 'styled-components';
+
+/*
+    회원가입/로그인 페이지의 레이아웃을 담당하는 컴포넌트이다.
+*/
+
+const AuthTemplateBlock = styled.div``;
+
+const AuthTemplate = () => {
+    return (
+        <AuthTemplateBlock>
+
+        </AuthTemplateBlock>
+    );
+};
+
+export default AuthTemplate;
+
+
+컴포넌트를 만들때 VS Code의 Snippet 기능을 사용하면 작업 시간을 줄일 수 있을 뿐 아니라 매우 유용하다.
+3장에서 확장 프로그램을 통해 Snippet 을 설치하여 사용 방법을 알아봤는데, 이 장에선 직접 쓰면서 어떻게 해야 하는지 알아보자.
+
+우선 Snippet 으로 사용하고 싶은 코드를 복사한다. 방금 만든 AuthTemplate 코드를 복사하면 된다.
+그리고 브라우저에 https://snippet-generator.app/ 주소에 좌측 텍스트 박스에 코드를 붙여 넣는다.
+
+이제 코드의 AuthTemplate 이란 말을 모두 ${TM_FILENAME_BASE} 로 대체하자.
+이는 확장자를 제외한 파일이름을 의미한다. 컴포넌트의 주석도 지운다.
+
+
+import React from 'react';
+import styled from 'styled-components';
+
+const ${TM_FILENAME_BASE}Block = styled.div``;
+
+const ${TM_FILENAME_BASE} = () => {
+    return (
+        <${TM_FILENAME_BASE}Block>
+
+        </${TM_FILENAME_BASE}Block>
+    );
+};
+
+export default ${TM_FILENAME_BASE};
+
+
+이렇게 코드를 작성한 뒤 상단에 Snippet의 설명(Description...)과 줄임 단어(Tab trigger...)를 입력한다.
+설명 부분에는 'Styled React Functional Component' 라고 입력하고, 줄임 단어에는 'srfc' 라고 입력한다.
+
+모두 작성했다면 우측 하단의 Copy snippet 버튼을 누른다.
+이 버튼을 누르면 Snippet이 복사된다. VS Code 를 열어서 Code > 기본 설정 > 사용자 코드 조각 메뉴를 누른다.
+(Window에서는 파일 메뉴에 존재) 어떤 언어의 Snippet을 설정할 것인지 물어보면 javascriptreact를 입력한다.
+
+그리고 JSON 파일 안에 방금 복사한 Snippet을 붙여 넣고 저장한다.
+
+
+{
+	"Styled React Functional Component": {
+		"prefix": "srfc",
+		"body": [
+			"import React from 'react';",
+			"import styled from 'styled-components';",
+			"",
+			"const ${TM_FILENAME_BASE}Block = styled.div``;",
+			"",
+			"const ${TM_FILENAME_BASE} = () => {",
+			"    return (",
+			"        <${TM_FILENAME_BASE}Block>",
+			"",
+			"        </${TM_FILENAME_BASE}Block>",
+			"    );",
+			"};",
+			"",
+			"export default ${TM_FILENAME_BASE};",
+			""
+		],
+		"description": "Styled React Functional Component"
+	}
+}
+
+
+이제 이 Snippet을 사용해 보자. 나중에 만들 컴포넌트 중에서 Header 컴포넌트를 만들어 보겠다.
+이 컴포넌트는 components/base 경로에 저장한다. base는 프로젝트의 기반을 의미한다.
+Header.js 컴포넌트를 생성하고 열어보자. 우측 하단에 언어가 JavaScript 라고 나오면 방금 만든 Snippet을 사용할 수 없다.
+
+JavaScript로 설정되어 있으면 해당 부분을 클릭한 뒤, '.js'에 대한 파일 연결 구성 > JavaScriptReact 를 선택한다.
+
+이제부터 새 자바스크립트 파일을 만들어서 srfc 라고 입력한 뒤 Enter를 누르면 다음과 같은 코드가 자동 생성된다.
+
+
+예시 코드
+
+import React from 'react';
+import styled from 'styled-components';
+
+const HeaderBlock = styled.div``;
+
+const Header = () => {
+    return (
+        <HeaderBlock>
+
+        </HeaderBlock>
+    );
+};
+
+export default Header;
+
+
+Snippet에서 사용할 수 있는 동적 값에 대해 더 알고 싶다면 다음 페이지를 참고하자.
+
+
+    - https://code.visualstudio.com/docs/editor/userdefinedsnippets
+
+
+Snippet 설정을 끝낸 뒤에는 다시 AuthTemplate 컴포넌트를 열어서 children을 렌더링하자.
+
+
+import React from 'react';
+import styled from 'styled-components';
+
+/*
+    회원가입/로그인 페이지의 레이아웃을 담당하는 컴포넌트이다.
+*/
+
+const AuthTemplateBlock = styled.div``;
+
+const AuthTemplate = ({ children }) => {
+    return <AuthTemplateBlock>{children}</AuthTemplateBlock>;
+};
+
+export default AuthTemplate;
+
+
+다음으로 LoginPage와 RegisterPage에서 방금 만든 컴포넌트들을 렌더링하자.
+
+
+import React from 'react';
+import AuthTemplate from '../components/auth/AuthTemplate';
+import AuthForm from '../components/auth/AuthForm';
+
+const LoginPage = () => {
+    return (
+        <AuthTemplate>
+            <AuthForm />
+        </AuthTemplate>
+    )
+};
+
+export default LoginPage;
+
+
+import React from 'react';
+import AuthTemplate from '../components/auth/AuthTemplate';
+import AuthForm from '../components/auth/AuthForm';
+
+const RegisterPage = () => {
+    return (
+        <AuthTemplate>
+            <AuthForm />
+        </AuthTemplate>
+    )
+};
+
+export default RegisterPage;
+
+
+지금은 LoginPage와 RegisterPage의 결과물은 같다. 우선 페이지가 잘 나타나는지 확인해보자.
+
+
+    24.2.1.1 AuthTemplate 완성하기
+
+AuthTemplate 컴포넌트는 children으로 받아 온 내용을 보여 주기만 하는 역할이므로 매우 간단하다.
+이 컴포넌트의 배경은 회색이고, 중앙에 흰색 박스를 띄워 주며, 홈 경로 / 로 돌아가는 링크도 보여준다.
+
+
+import React from 'react';
+import styled from 'styled-components';
+import palette from '../../lib/styles/palette';
+import { Link } from "react-router-dom";
+
+/*
+    회원가입/로그인 페이지의 레이아웃을 담당하는 컴포넌트이다.
+*/
+
+/* 화면 전체를 채움 */
+const AuthTemplateBlock = styled.div`
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    background: ${palette.gray[2]};
+    /* flex로 내부 내용 중앙 정렬 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+`;
+
+/* 흰색 박스 */
+const WhiteBox = styled.div`
+    .logo-area {
+        display: block;
+        padding-bottom: 2rem;
+        text-align: center;
+        font-weight: bold;
+        letter-spacing: 2px;
+    }
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.025);
+    padding: 2rem;
+    width: 360px;
+    background: white;
+    border-radius: 2px;
+`;
+
+const AuthTemplate = ({ children }) => {
+    return (
+        <AuthTemplateBlock>
+            <WhiteBox>
+                <div className="logo-area">
+                    <Link to="/">REACTERS</Link>
+                </div>
+            {children}
+            </WhiteBox>
+        </AuthTemplateBlock>);
+};
+
+export default AuthTemplate;
+
+
+styled-components로 컴포넌트를 스타일링할 때, 스타일링할 엘리먼트에 대해 새로운 컴포넌트 이름을 지어 줄지,
+아니면 CSS Selector를 사용할지는 취향에 따라 결정하면 된다.
+
+이 책에선 어떤 엘리먼트에 특별한 용도가 있거나 이름을 따로 만들어 주었을 때 JSX의 가독성이 좋아진다면,
+styled-components를 통해 컴포넌트에 새로운 이름을 만들어 줄 것이다. 그러나 딱히 중요한 역할을 맡고 있지 않다면
+CSS Selector를 활용할 것이다.
+
+코드를 저장하고 로그인 페이지에 들어가서 확인해보자.
+
+이 프로젝트의 이름은 REACTERS 라고 부르겠다.
+
+
+    24.2.1.2 AuthForm 완성하기
+
+이번에는 AuthForm 컴포넌트를 구성하겠다.
+
+
+import React from 'react';
+import styled from 'styled-components';
+import { Link } from "react-router-dom";
+import palette from '../../lib/styles/palette';
+import Button from '../common/Button';
+
+/*
+    회원가입 또는 로그인 폼을 보여 준다.
+*/
+
+const AuthFormBlock = styled.div`
+    h3 {
+        margin: 0;
+        color: ${palette.gray[8]};
+        margin-bottom: 1rem;
+    }
+`;
+
+/* 스타일링된 input */
+const StyledInput = styled.input`
+    font-size: 1rem;
+    border: none;
+    border-bottom: 1px solid ${palette.gray[5]};
+    padding-bottom: 0.5rem;
+    outline: none;
+    width: 100%;
+    &:focus {
+        color: $oc-teal-7;
+        border-bottom: 1px solid ${palette.gray[7]};
+    }
+    & + & {
+        margin-top: 1rem;
+    }
+`;
+
+/* 폼 하단에 로그인 혹은 회원가입 링크를 보여줌 */
+const Footer = styled.div`
+    margin-top: 2rem;
+    text-align: right;
+    a {
+        color: ${palette.gray[6]};
+        text-decoration: underline;
+        &:hover {
+            color: ${palette.gray[9]};
+        }
+    }
+`;
+
+const AuthForm = () => {
+    return (
+        <AuthFormBlock>
+            <h3>로그인</h3>
+            <form>
+                <StyledInput autoComplete="username" name="username" placeholder="아이디" />
+                <StyledInput
+                    autoComplete="new-password"
+                    name="password"
+                    placeholder="비밀번호"
+                    type="password"
+                    />
+                <Button>로그인</Button>
+            </form>
+            <Footer>
+                <Link to="/register">회원가입</Link>
+            </Footer>
+        </AuthFormBlock>
+    );
+};
+
+export default AuthForm;
+
+
+여기서 로그인 버튼에 밝은 파란색을 넣어 주고 width를 100% 차지하는 것으로 수정해 보겠다.
+Button 컴포넌트를 다음과 같이 수정한다.
+
+
+import React from 'react';
+import styled, { css } from 'styled-components';
+import palette from '../../lib/styles/palette';
+
+const StyledButton = styled.button`
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 0.25rem 1rem;
+    color: white;
+    outline: none;
+    cursor: pointer;
+
+    background: ${palette.gray[8]};
+    &.hover {
+        background: ${palette.gray[6]};
+    }
+
+    ${props => 
+        props.fullWidth &&
+        css `
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+            width: 100%;
+            font-size: 1.125rem;
+        `}
+    
+    ${props =>
+        props.cyan &&
+        css`
+            background: ${palette.cyan[5]};
+            &:hover {
+                background: ${palette.cyan[4]};
+            }
+        `}
+`;
+
+const Button = (props) => <StyledButton {...props} />;
+
+export default Button;
+
+
+Button 컴포넌트에 cyan과 fullWidth라는 props 를 넣어 주면 다른 스타일이 적용된다.
+다시 AuthForm을 열어서 Button을 사용하는 부분을 수정해 주자.
+
+
+const AuthForm = () => {
+    return (
+        <AuthFormBlock>
+            <h3>로그인</h3>
+            <form>
+                <StyledInput autoComplete="username" name="username" placeholder="아이디" />
+                <StyledInput
+                    autoComplete="new-password"
+                    name="password"
+                    placeholder="비밀번호"
+                    type="password"
+                    />
+                <Button cyan fullWidth>
+                    로그인
+                </Button>
+            </form>
+            <Footer>
+                <Link to="/register">회원가입</Link>
+            </Footer>
+        </AuthFormBlock>
+    );
+};
+
+
+<Button cyan fullWidth>는 <Button cyan={true} fullWidth={true} /> 와 같은 의미이다.
+
+이제 이 컴포넌트에 상단 여백을 넣어 보겠다. 상단 여백을 주는 방법은 두 가지이다.
+첫 번째 방법은 style props를 전달해 주는 것이다.
+
+
+<Button cyan fullWidth style={{ marginTop: '1rem' }}>
+    로그인
+</Button>
+
+
+두 번째 방법은 styled 함수를 사용하여 새로운 컴포넌트 이름으로 정의하는 것이다.
+
+
+...
+
+const ButtonWithMarginTop = styled(Button)`
+    margin-top: 1rem;
+`;
+
+const AuthForm = () => {
+    return (
+        <AuthFormBlock>
+            <h3>로그인</h3>
+            <form>
+                <StyledInput autoComplete="username" name="username" placeholder="아이디" />
+                <StyledInput
+                    autoComplete="new-password"
+                    name="password"
+                    placeholder="비밀번호"
+                    type="password"
+                    />
+                <ButtonWithMarginTop cyan fullWidth>
+                    로그인
+                </ButtonWithMarginTop>
+            </form>
+            <Footer>
+                <Link to="/register">회원가입</Link>
+            </Footer>
+        </AuthFormBlock>
+    );
+};
+
+export default AuthForm;
+
+
+두 번째 방식이 가독성이 더 좋기 때문에 두 번째 방식을 사용하겠다.
+
+밝은 파란색 컴포넌트가 잘 보인다.
+이제 AuthForm 에서 type props 에 따라 다른 내용을 보여주도록 수정해 본다.
+type 값에 따라 사용되는 문구도 달라지고, type이 'register' 일 때는 비밀번호 확인 인풋도 보여 준다.
+
+
+...
+
+const textMap = {
+    login: '로그인',
+    register: '회원가입'
+};
+
+const AuthForm = ({ type }) => {
+    const text = textMap[type];
+    return (
+        <AuthFormBlock>
+            <h3>{text}</h3>
+            <form>
+                <StyledInput autoComplete="username" name="username" placeholder="아이디" />
+                <StyledInput
+                    autoComplete="new-password"
+                    name="password"
+                    placeholder="비밀번호"
+                    type="password"
+                    />
+                {type === 'register' && (
+                    <StyledInput
+                        autoComplete="new-password"
+                        name="passwordConfirm"
+                        placeholder="비밀번호 확인"
+                        type="password"
+                        />
+                )}
+                <ButtonWithMarginTop cyan fullWidth style={{ marginTop: '1rem' }}>
+                    {text}
+                </ButtonWithMarginTop>
+            </form>
+            <Footer>
+                {type === 'login' ? (
+                    <Link to="/register">회원가입</Link>
+                ) : (
+                    <Link to="/login">로그인</Link>
+                )}
+            </Footer>
+        </AuthFormBlock>
+    );
+};
+
+export default AuthForm;
+
+
+LoginPage와 RegisterPage에서 AuthForm 을사용할 때 type을 넣어 준다.
+
+
+import React from 'react';
+import AuthTemplate from '../components/auth/AuthTemplate';
+import AuthForm from '../components/auth/AuthForm';
+
+const LoginPage = () => {
+    return (
+        <AuthTemplate>
+            <AuthForm type="login" />
+        </AuthTemplate>
+    )
+};
+
+export default LoginPage;
+
+
+import React from 'react';
+import AuthTemplate from '../components/auth/AuthTemplate';
+import AuthForm from '../components/auth/AuthForm';
+
+const RegisterPage = () => {
+    return (
+        <AuthTemplate>
+            <AuthForm type="register" />
+        </AuthTemplate>
+    )
+};
+
+export default RegisterPage;
+
+
+/login과 /register 페이지에 문구가 잘 나오는지 확인하자.
+
+이제 회원 인증에 필요한 UI를 모두 완성했다.
+
+
+        24.2.2 리덕스로 폼 상태 관리하기
+
+이번에는 리덕스로 회원가입과 로그인 폼의 상태를 관리하는 방법을 알아본다.
+이전에 만들어 놓았던 auth 모듈을 다음과 같이 수정해 준다.
+
+
+import { createAction, handleActions } from 'redux-actions';
+import produce from 'immer';
+
+const CHANGE_FIELD = 'auth/CHANGE_FIELD';
+const INITIALIZE_FORM = 'auth/INITIALIZE_FORM'
+
+export const changeField = createAction(
+    CHANGE_FIELD,
+    ({ form, key, value }) => ({
+        form,   // register, login
+        key,    // username, password, passwordConfirm
+        value,  // 실제 바꾸려는 값
+    }),
+);
+
+export const initializeForm = createAction(INITIALIZE_FORM, form => form);  // register, login
+
+const initialState = {
+    register: {
+        username: '',
+        password: '',
+        passwordConfirm: '',
+    },
+    login: {
+        username: '',
+        password: '',
+    },
+};
+
+const auth = handleActions(
+    {
+        [CHANGE_FIELD]: (state, { payload: { form, key, value } }) =>
+            produce(state, draft => {
+                draft[form][key] = value;   // 예: state.register.username을 바꾼다.
+            }),
+        [INITIALIZE_FORM]: (state, { payload: form }) => ({
+            ...state,
+            [form]: initialState[form],
+        }),
+    },
+    initialState,
+);
+
+export default auth;
+
+
+이제 컨테이너 컴포넌트를 만들어 보자. src 디렉터리에 containers 디렉터리를 만든 후 다양한 컨테이너 컴포넌트들을 종류별로
+분류하여 만들어 보겠다.
+
+앞으로 만들 컨테이너 컴포넌트에서는 useDispatch와 useSelector 함수를 사용하여 컴포넌트를 리덕스와 연동시킨다.
+앞으로 이 프로젝트에서 작성할 모든 컨테이너 컴포넌트는 connect 함수 대신 Hooks를 사용하여 구현할 것이다.
+
+
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { changeField, initializeForm } from "../../modules/auth";
+import AuthForm from '../../components/auth/AuthForm';
+
+const LoginForm = () => {
+    const dispatch = useDispatch();
+    const { form } = useSelector(({ auth }) => ({
+        form: auth.login
+    }));
+    // 인풋 변경 이벤트 핸들러
+    const onChange = e => {
+        const { value, name } = e.target;
+        dispatch(
+            changeField({
+                form: 'login',
+                key: name,
+                value
+            })
+        );
+    };
+
+    // 폼 등록 이벤트 핸들러
+    const onSubmit = e => {
+        e.preventDefault();
+        // 구현 예정
+    };
+
+    // 컴포넌트가 처음 렌더링될 때 form을 초기화함
+    useEffect(() => {
+        dispatch(initializeForm('login'));
+    }, [dispatch]);
+
+    return (
+        <AuthForm 
+            type="login"
+            form={form}
+            onChange={onChange}
+            onSubmit={onSubmit}
+            />
+    );
+};
+
+export default LoginForm;
+
+
+위 컴포넌트에서 onChange 함수와 onSubmit 함수를 구현하여 필요한 액션을 디스패치하도록 구현해 주었다.
+또한, useEffect 를 사용하여 맨 처음 렌더링 후 initializeForm 액션 생성 함수를 호출했다.
+이 작업을 하지 않으면, 로그인 페이지에서 값을 입력한 뒤 다른 페이지로 이동했다가 다시 돌아왔을 때
+값이 유지된 상태로 보이게 된다.
+이 컨테이너 컴포넌트를 다 만든 뒤에는 LoginPage에서 기존 AuthForm을 LoginForm으로 대체시키자.
+
+
+import React from 'react';
+import AuthTemplate from '../components/auth/AuthTemplate';
+import LoginForm from '../containers/auth/LoginForm';
+
+const LoginPage = () => {
+    return (
+        <AuthTemplate>
+            <LoginForm />
+        </AuthTemplate>
+    )
+};
+
+export default LoginPage;
+
+
+다음으로는 컨테이너에서 props로 넣어 주었던 onChange, onSubmit, form 값을 사용하겠다.
+
+
+const AuthForm = ({ type, form, onChange, onSubmit }) => {
+    const text = textMap[type];
+    return (
+        <AuthFormBlock>
+            <h3>{text}</h3>
+            <form onSubmit={onSubmit}>
+                <StyledInput 
+                    autoComplete="username" 
+                    name="username" 
+                    placeholder="아이디" 
+                    onChange={onChange}
+                    value={form.username}
+                    />
+                <StyledInput
+                    autoComplete="new-password"
+                    name="password"
+                    placeholder="비밀번호"
+                    type="password"
+                    onChange={onChange}
+                    value={form.password}
+                    />
+                {type === 'register' && (
+                    <StyledInput
+                        autoComplete="new-password"
+                        name="passwordConfirm"
+                        placeholder="비밀번호 확인"
+                        type="password"
+                        onChange={onChange}
+                        value={form.passwordConfirm}
+                        />
+                )}
+                <ButtonWithMarginTop cyan fullWidth style={{ marginTop: '1rem' }}>
+                    {text}
+                </ButtonWithMarginTop>
+            </form>
+            <Footer>
+                {type === 'login' ? (
+                    <Link to="/register">회원가입</Link>
+                ) : (
+                    <Link to="/login">로그인</Link>
+                )}
+            </Footer>
+        </AuthFormBlock>
+    );
+};
+
+export default AuthForm;
+
+
+코드를 저장한 뒤 http://localhost:3000/login 펭지에 가 보자. 그리고 인풋에 텍스트를 입력하고 나서 값이
+리덕스 스토어에 잘 들어가는지 개발자 도구를 통해 확인해보자.
+
+만약 회원가입 페이지를 보고 있다면 form 값이 없어서 에러가 발생할 것이다. 회원가입 페이지의 에러는 나중에 수정하겠다.
+
+이제 RegisterForm 컴포넌트도 구현하겠다. LoginForm 컴포넌트를 복사한 뒤 내부에서 사용되는 키워드만
+Login -> Register, login -> register 로 고쳐 주면 된다.
+
+
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { changeField, initializeForm } from "../../modules/auth";
+import AuthForm from '../../components/auth/AuthForm';
+
+const RegisterForm = () => {
+    const dispatch = useDispatch();
+    const { form } = useSelector(({ auth }) => ({
+        form: auth.register
+    }));
+    // 인풋 변경 이벤트 핸들러
+    const onChange = e => {
+        const { value, name } = e.target;
+        dispatch(
+            changeField({
+                form: 'register',
+                key: name,
+                value
+            })
+        );
+    };
+
+    // 폼 등록 이벤트 핸들러
+    const onSubmit = e => {
+        e.preventDefault();
+        // 구현 예정
+    };
+
+    // 컴포넌트가 처음 렌더링될 때 form을 초기화함
+    useEffect(() => {
+        dispatch(initializeForm('register'));
+    }, [dispatch]);
+
+    return (
+        <AuthForm 
+            type="register"
+            form={form}
+            onChange={onChange}
+            onSubmit={onSubmit}
+            />
+    );
+};
+
+export default RegisterForm;
+
+
+이제 RegisterPage 에서 사용 중이던 AuthForm을 RegisterForm 으로 교체하자.
+
+
+import React from 'react';
+import AuthTemplate from '../components/auth/AuthTemplate';
+import RegisterForm from '../containers/auth/RegisterForm';
+
+const RegisterPage = () => {
+    return (
+        <AuthTemplate>
+            <RegisterForm />
+        </AuthTemplate>
+    )
+};
+
+export default RegisterPage;
+
+
+코드를 작성한 뒤 회원가입 폼에서 값을 입력할 때 리덕스에 값이 잘 반영되는지 확인하자.
+
+
+        24.2.3 API 연동하기
+
+이제 API를 연동해 본다. axios를 사용하여 API를 연동하겠다. 그리고 리덕스에서 비동기 작업을 쉽게 관리하기 위해
+redux-saga와 이전에 만들어서 사용했던 createRequestSaga 유틸 함수를 이용한다.
+먼저 필요한 라이브러리를 설치해 준다.
+
+
+$ yarn add axios redux-saga
+
+
+이번 프로젝트에서 사용되는 API의 수가 적은 편이므로 모든 API를 함수로 만들고 하나의 파일에 넣어서 관리해도 큰 지장은 없다.
+하지만 유지 보수성을 더 높이기 위해 기능별로 파일을 나누어서 작성하겠다.
+src/lib/api 디렉터리를 만들고 그 안에 기능별로 파일을 따로따로 생성하겠다.
+
+
+    24.2.3.1 axios 인스턴스 생성
+
+API 함수를 작성하기 전에 먼저 해야 할 작업이 있다. 바로 axios 인스턴스를 생성하는 것이다.
+
+
+import axios from 'axios';
+
+const client = axios.create();
+
+/*
+    글로벌 설정 예시:
+
+    // API 주소를 다른 곳으로 사용함
+    client.defaults.baseURL = 'https://external-api-server.com/
+
+    // 헤서 설정
+    client.defaults.headers.common['Authorization'] = 'Bearer a1b2c3d4'
+
+    // 인터셉터 설정
+    axios.intercepter.response.use({
+        response => {
+            // 요청 성공 시 특정 작업 수행
+            return response;
+        },
+        error => {
+            // 요청 실패 시 특정 작업 수행
+            return Promise.reject(error);
+        }
+    })
+*/
+
+export default client;
+
+
+이렇게 axios 인스턴스를 만들면 나중에 API 클라이언트에 공통된 설정을 쉽게 넣어 줄 수 있다.
+사실 인스턴스를 만들지 않아도 이러한 작업을 할 수 있다. 하지만 인스턴스를 만들지 않으면 애플리케이션에서 발생하는
+모든 요청에 대해 설정하게 되므로, 또 다른 API 서버를 사용하려 할 때 곤란해질 수 있다.
+따라서 처음 개발할 때부터 이렇게 인스턴스를 만들어서 작업 하는 것을 권장한다.
+
+추가로 나중에 axios를 사용하지 않는 상황이 왔을 때 쉽게 클라이언트를 교체할 수 있는 것 또한 장점이다.
+
+
+    24.2.3.2 프록시 설정
+
+현재 백엔드 서버는 4000 포트, 리액트 개발 서버는 3000 포트로 열려 있기 때문에 별도의 설정없이 API를 호출하려고 하면
+오류가 발생한다. 이 오류를 CORS(Cross Origin Request) 오류라고 부르는데, 네트워크 요청을 할 때 주소가 다른 경우에 발생한다.
+이 오류를 해결하려면 다른 주소에서도 API를 호출할 수 있도록 서버 쪽 코드를 수정해야 한다.
+그런게 최종적으로 프로젝트를 다 완성하고 나면 결국 리액트 앱도 같은 호스트에서 제공할 것이기 때문에
+이러한 설정을 하는 것은 불필요하다.
+
+그 대신 프록시(proxy) 라는 기능을 사용할 것이다. 웹팩 개발 서버에서 지원하는 기능인데, 개발 서버로
+요청하는 API들을 우리가 프록시로 정해 둔 서버로 그대로 전달해 주고 그 응답을 웹 애플리케이션에서 사용할 수 있게 해 준다.
+
+
+                →
+    브라우저            개발 서버
+                ←       │   ↑
+                        프록시
+                        ↓   │
+                        벡엔드 서버
+
+
+CRA로 만든 프로젝트에서 프록시를 설정할 때는 package.json 파일을 수정하면 된다.
+해당 파일을 열어서 다음 내용을 추가한다.
+
+
+{
+  ...
+    },
+    "proxy": "http://localhost:4000/"
+}
+
+
+이제 리액트 애플리케이션에서 client.get('/api/posts')를 하면, 웹팩 개발 서버가 프록시 역할을 해서
+http://localhost:4000/api/posts 에 대신 요청한 뒤 결과물을 응답해 준다.
+
+
+    24.2.3.3 API 함수 작성
+
+프록시 설정이 끝났으면 개발 서버를 껐다가 다시 실행해 주자. 이어서 회원 인증에 필요한 API를 사용하기 쉽도록
+함수화하여 파일로 작성해 주겠다.
+
+
+import client from './client';
+
+// 로그인
+export const login = ({ username, password }) => 
+    client.post('/api/auth/login', { username, password });
+
+// 회원가입
+export const register = ({ username, password }) => 
+    client.post('/api/auth/register', { username, password });
+
+// 로그인 상태 확인
+export const check = () => client.get('/api/auth/check');
+
+
+    24.2.3.4 더 쉬운 API 요청 상태 관리
+
+다음으로 redux-saga 를 통해 더 쉽게 API를 요청할 수 있도록 loading 리덕스 모듈과 createRequestSaga 유틸 함수를 설정하겠다.
+먼저 loading 리덕스 모듈을 작성한다.
+
+
+import { createAction, handleActions } from 'redux-actions';
+
+const START_LOADING = 'loading/START_LOADING';
+const FINISH_LOADING = 'loading/FINISH_LOADING';
+
+/* 요청을 위한 액션 타입을 payload로 설정한다. (예: "sample/GET_POST") */
+
+export const startLoading = createAction(
+    START_LOADING,
+    requestType => requestType,
+);
+
+export const finishLoading = createAction(
+    FINISH_LOADING,
+    requestType => requestType,
+);
+
+const initialState = {};
+
+const loading = handleActions(
+    {
+        [START_LOADING]: (state, action) => ({
+            ...state,
+            [action.payload]: true,
+        }),
+        [FINISH_LOADING]: (state, action) => ({
+            ...state,
+            [action.payload]: false,
+        }),
+    },
+    initialState,
+);
+
+export default loading;
+
+
+이 리듀서를 만든 다음에는 루트 리듀서에도 등록해 준다.
+
+
+import { combineReducers } from 'redux';
+import auth from './auth';
+import loading from './loading';
+
+const rootReducer = combineReducers({
+    auth,
+    loading,
+});
+
+export default rootReducer;
+
+
+이어서 lib 디렉터리에 새 파일을 만들고 createRequestSaga 함수를 작성한다.
+
+
+import { call, put } from "redux-saga/effects";
+import { startLoading, finishLoading } from "../modules/loading";
+
+export default function createRequestSaga(type, request) {
+    const SUCCESS = `${type}_SUCCESS`;
+    const FAILURE = `${type}_FAILURE`;
+
+    return function*(action) {
+        yield put(startLoading(type));  // 로딩 시작
+        try {
+            const response = yield call(request, action.payload);
+            yield put({
+                type: SUCCESS,
+                payload: response.data,
+            });
+        } catch (e) {
+            yield put({
+                type: FAILURE,
+                payload: e,
+                error: true,
+            });
+        }
+        yield put(finishLoading(type)); // 로딩 끝
+    };
+}
+
+
+    24.2.3.5 auth 리덕스 모듈에서 API 사용하기
+
+그럼 방금 만든 유틸 함수를 사용하여 auth 리덕스 모듈에서 API를 사용할 수 있도록 구현하겠다.
+우선 다음과 같이 여섯 가지 액션 타입을 추가로 더 선언해야 한다.
+
+
+import { createAction, handleActions } from 'redux-actions';
+import produce from 'immer';
+
+const CHANGE_FIELD = 'auth/CHANGE_FIELD';
+const INITIALIZE_FORM = 'auth/INITIALIZE_FORM';
+
+const REGISTER = 'auth/REGISTER';
+const REGISTER_SUCCESS = 'auth/REGISTER_SUCCESS';
+const REGISTER_FAILURE = 'auth/REGISTER_FAILURE';
+
+const LOGIN = 'auth/LOGIN';
+const LOGIN_SUCCESS = 'auth/LOGIN_SUCCESS';
+const LOGIN_FAILURE = 'auth/LOGIN_FAILURE';
+
+...
+
+
+각 요청마다 액션 타입을 세 개 선언해야 하는데, 같은 작업이 조금 반복된다.
+코드를 반복해서 작성하는 것이 사람에 따라 귀찮을 수 있다. 이와 같은 경우 액션 타입을 한꺼번에 만드는 함수를 선언하는
+방법도 있다. 위 코드를 한번 리팩토링 해보자.
+
+우선 createRequestSaga.js 파일을 열고 그 내부에 createRequestActionTypes 라는 함수를 선언하여 내보내자.
+
+
+import { call, put } from "redux-saga/effects";
+import { startLoading, finishLoading } from "../modules/loading";
+
+export const createRequestActionTypes = type => {
+    const SUCCESS = `${type}_SUCCESS`;
+    const FAILURE = `${type}_FAILURE`;
+    return [type, SUCCESS, FAILURE];
+}
+
+export default function createRequestSaga(type, request) {
+    ...
+}
+
+
+이 함수를 사용하면 요청에 관련된 액션 타입들을 선언할 때 다음과 같이 작성할 수 있다.
+
+
+import { createAction, handleActions } from 'redux-actions';
+import produce from 'immer';
+import { createRequestActionTypes } from "../lib//createRequestSaga";
+
+const CHANGE_FIELD = 'auth/CHANGE_FIELD';
+const INITIALIZE_FORM = 'auth/INITIALIZE_FORM';
+
+const [REGISTER, REGISTER_SUCCESS, REGISTER_FAILURE] = createRequestActionTypes(
+    'auth/REGISTER',
+);
+
+const [LOGIN, LOGIN_SUCCESS, LOGIN_FAILURE] = createRequestActionTypes(
+    'auth/LOGIN',
+);
+...
+
+
+중복되는 코드가 많이 줄었다. 취향에 따라 이렇게 리팩토링하여 사용해도 되고, const를 세 번 사용해 선언해도 된다.
+이제 createRequestSaga 를 통해 각 API를 위한 사가를 생성하고, 액션 생성 함수와 리듀서도 구현해 보겠다.
+
+
+import { createAction, handleActions } from 'redux-actions';
+import produce from 'immer';
+import createRequestSaga, { createRequestActionTypes } from "../lib//createRequestSaga";
+import { takeLatest } from "redux-saga/effects";
+import * as authAPI from '../lib/api/auth';
+
+const CHANGE_FIELD = 'auth/CHANGE_FIELD';
+const INITIALIZE_FORM = 'auth/INITIALIZE_FORM';
+
+const [REGISTER, REGISTER_SUCCESS, REGISTER_FAILURE] = createRequestActionTypes(
+    'auth/REGISTER',
+);
+
+const [LOGIN, LOGIN_SUCCESS, LOGIN_FAILURE] = createRequestActionTypes(
+    'auth/LOGIN',
+);
+
+export const changeField = createAction(
+    CHANGE_FIELD,
+    ({ form, key, value }) => ({
+        form,   // register, login
+        key,    // username, password, passwordConfirm
+        value,  // 실제 바꾸려는 값
+    }),
+);
+
+export const initializeForm = createAction(INITIALIZE_FORM, form => form);  // register, login
+export const register = createAction(REGISTER, ({ username, password }) => ({
+    username,
+    password,
+}));
+export const login = createAction(LOGIN, ({ username, password }) => ({
+    username,
+    password,
+}));
+
+// 사가 생성
+const registerSaga = createRequestSaga(REGISTER, authAPI.register);
+const loginSaga = createRequestSaga(LOGIN, authAPI.login);
+export function* authSaga() {
+    yield takeLatest(REGISTER, registerSaga);
+    yield takeLatest(LOGIN, loginSaga);
+}
+
+const initialState = {
+    register: {
+        username: '',
+        password: '',
+        passwordConfirm: '',
+    },
+    login: {
+        username: '',
+        password: '',
+    },
+    auth: null,
+    authError: null,
+};
+
+const auth = handleActions(
+    {
+        [CHANGE_FIELD]: (state, { payload: { form, key, value } }) =>
+            produce(state, draft => {
+                draft[form][key] = value;   // 예: state.register.username을 바꾼다.
+            }),
+        [INITIALIZE_FORM]: (state, { payload: form }) => ({
+            ...state,
+            [form]: initialState[form],
+            authError: null,    // 폼 전환 시 회원 인증 에러 초기화
+        }),
+        // 회원가입 성공
+        [REGISTER_SUCCESS]: (state, { payload: auth }) => ({
+            ...state,
+            authError: null,
+            auth,
+        }),
+        // 회원가입 실패
+        [REGISTER_FAILURE]: (state, { payload: error }) => ({
+            ...state,
+            authError: error,
+        }),
+        // 로그인 성공
+        [LOGIN_SUCCESS]: (state, { payload: auth }) => ({
+            ...state,
+            authError: null,
+            auth,
+        }),
+        // 로그인 실패
+        [LOGIN_FAILURE]: (state, { payload: error }) => ({
+            ...state,
+            authError: error,
+        }),
+    },
+    initialState,
+);
+
+export default auth;
+
+
+구현할 때 로딩에 관련된 상태는 이미 loading 리덕스 모듈에서 관리하므로, 성공했을 때와 실패 했을 때의
+상태에 대해서만 신경 쓰면 된다.
+리덕스 묘듈을 작성했으면 프로젝트의 rootSaga를 만들어 주자.
+
+
+import { combineReducers } from 'redux';
+import auth, { authSaga } from './auth';
+import loading from './loading';
+import { all } from "redux-saga/effects";
+
+const rootReducer = combineReducers({
+    auth,
+    loading,
+});
+
+export function* rootSaga() {
+    yield all([authSaga()]);
+}
+
+export default rootReducer;
+
+
+다음으로 스토어에 redux-saga 미들웨어를 적용하자.
+
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import { BrowserRouter } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { createStore, applyMiddleware } from 'redux';
+import { composeWithDevTools } from 'redux-devtools-extension';
+import rootReducer, { rootSaga } from './modules';
+import createSagaMiddleware from 'redux-saga';
+
+const sagaMiddleware = createSagaMiddleware();
+const store = createStore(
+    rootReducer, 
+    composeWithDevTools(applyMiddleware(sagaMiddleware)),
+);
+
+sagaMiddleware.run(rootSaga);
+
+ReactDOM.render(
+    <Provider store={store}>
+        <BrowserRouter>
+            <App />
+        </BrowserRouter>
+    </Provider>,
+    document.getElementById('root'),
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+
+
+이제 회원가입 및 로그인 기능을 구현하는데 필요한 리덕스 관련 코드의 준비를 모두 마쳤다.
+
+
+        24.2.4 회원가입 구현
+
+바로 회원가입 기능을 구현해보자. 오류 처리는 나중에 할 것이고, 지금은 신경쓰지말자.
+
+
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { changeField, initializeForm, register } from "../../modules/auth";
+import AuthForm from '../../components/auth/AuthForm';
+
+const RegisterForm = () => {
+    const dispatch = useDispatch();
+    const { form, auth, authError } = useSelector(({ auth }) => ({
+        form: auth.register,
+        auth: auth.auth,
+        authError: auth.authError
+    }));
+    // 인풋 변경 이벤트 핸들러
+    const onChange = e => {
+        const { value, name } = e.target;
+        dispatch(
+            changeField({
+                form: 'register',
+                key: name,
+                value
+            })
+        );
+    };
+
+    // 폼 등록 이벤트 핸들러
+    const onSubmit = e => {
+        e.preventDefault();
+        const { username, password, passwordConfirm } = form;
+        if(password !== passwordConfirm) {
+            // TODO: 오류처리
+            return;
+        }
+        dispatch(register({ username, password }));
+    };
+
+    // 컴포넌트가 처음 렌더링될 때 form을 초기화함
+    useEffect(() => {
+        dispatch(initializeForm('register'));
+    }, [dispatch]);
+
+    // 회원가입 성공/실패 처리
+    useEffect(() => {
+        if(authError) {
+            console.log('오류 발생');
+            console.log(authError);
+            return;
+        }
+        if(auth) {
+            console.log('회원가입 성공');
+            console.log(auth);
+        }
+    }, [auth, authError]);
+
+    return (
+        <AuthForm 
+            type="register"
+            form={form}
+            onChange={onChange}
+            onSubmit={onSubmit}
+            />
+    );
+};
+
+export default RegisterForm;
+
+
+위 코드에서 onSubmit 이벤트 발생 시 register 함수에 현재 username과 password 를 파라미터로 넣어서 액션을 디스패치 했다.
+그리고 사가에서 API 요청을 처리하고, 이에 대한 결과는 auth/authError 를 통해 조회할 수 있다.
+
+또한, 결과를 얻었을 때 특정 작업을 하기 위해 useEffect 를 사용했다. useEffect에 넣어 준 함수는 
+auth 값 혹은 authError 값 중에서 무엇인지 유효한지에 따라 다른 작업을 한다.
+
+http://localhost:3000/register 회원가입 페이지에서 아무 계정 정보나 입력하고 회원가입을 한번 시도해보자.
+이어서 개발자 도구 콘솔에 무엇이 찍히는지 확인하고, 버튼을 다시 한 번 눌러 보자.
+처음에는 성공하고, 두 번째 바로 시도하면 실패처리 된다.
+
+
+회원가입 발생
+RegisterForm.js:50 {_id: "5fedcff0dc6a9d515881155f", username: "test", __v: 0}username: "test"__v: 0_id: "5fedcff0dc6a9d515881155f"__proto__: Object
+
+// 동일한 아이디, 패스워드인 상태로 바로 다시 요청
+
+22:20:28.154 xhr.js:177 POST http://localhost:3000/api/auth/register 409 (Conflict)
+22:20:28.158 RegisterForm.js:44 오류 발생
+22:20:28.158 RegisterForm.js:45 Error: Request failed with status code 409
+    at createError (createError.js:16)
+    at settle (settle.js:17)
+    at XMLHttpRequest.handleLoad (xhr.js:62)
+
+
+이제 사용자의 상태를 담을 user라는 리덕스 모듈을 만들어 본다.
+
+
+import { createAction, handleActions } from "redux-actions";
+import { takeLatest } from "redux-saga/effects";
+import * as authAPI from '../lib/api/auth';
+import createRequestSaga, { createRequestActionTypes, } from '../lib/createRequestSaga';
+
+const TEMP_SET_USER = 'user/TEMP_SET_USER'; // 새로고침 이후 임시 로그인 처리
+// 회원 정보 확인
+const [CHECK, CHECK_SUCCESS, CHECK_FAILURE] = createRequestActionTypes(
+    'user/CHECK',
+);
+
+export const tempSetUser = createAction(TEMP_SET_USER, user => user);
+export const check = createAction(CHECK);
+
+const checkSaga = createRequestSaga(CHECK, authAPI.check);
+export function* userSaga() {
+    yield takeLatest(CHECK, checkSaga);
+}
+
+const initialState = {
+    user: null,
+    checkError: null,
+};
+
+export default handleActions(
+    {
+        [TEMP_SET_USER]: (state, { payload: user }) => ({
+            ...state,
+            user,
+        }),
+        [CHECK_SUCCESS]: (state, { payload: user }) => ({
+            ...state,
+            user,
+            checkError: null,
+        }),
+        [CHECK_FAILURE]: (state, { payload: error }) => ({
+            ...state,
+            user: null,
+            checkError: error,
+        }),
+    },
+    initialState,
+);
+
+
+새 모듈을 만들었으니, 루트 리듀서에 포함시켜 줘야 한다.
+
+
+import { combineReducers } from 'redux';
+import auth, { authSaga } from './auth';
+import loading from './loading';
+import { all } from "redux-saga/effects";
+import user, { userSaga } from './user';
+
+const rootReducer = combineReducers({
+    auth,
+    loading,
+    user,
+});
+
+export function* rootSaga() {
+    yield all([authSaga(), userSaga()]);
+}
+
+export default rootReducer;
+
+
+리덕스 모듈을 다 작성했으면, 회원가입 성공 후 check를 호출하여 현재 사용자가 로그인 상태가 되었는지 확인하자.
+
+
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { changeField, initializeForm, register } from "../../modules/auth";
+import AuthForm from '../../components/auth/AuthForm';
+import { check } from "../../modules/user";
+
+const RegisterForm = () => {
+    const dispatch = useDispatch();
+    const { form, auth, authError, user } = useSelector(({ auth, user }) => ({
+        form: auth.register,
+        auth: auth.auth,
+        authError: auth.authError,
+        user: user.user
+    }));
+    // 인풋 변경 이벤트 핸들러
+    const onChange = e => {
+        const { value, name } = e.target;
+        dispatch(
+            changeField({
+                form: 'register',
+                key: name,
+                value
+            })
+        );
+    };
+
+    // 폼 등록 이벤트 핸들러
+    const onSubmit = e => {
+        e.preventDefault();
+        const { username, password, passwordConfirm } = form;
+        if(password !== passwordConfirm) {
+            // TODO: 오류처리
+            return;
+        }
+        dispatch(register({ username, password }));
+    };
+
+    // 컴포넌트가 처음 렌더링될 때 form을 초기화함
+    useEffect(() => {
+        dispatch(initializeForm('register'));
+    }, [dispatch]);
+
+    // 회원가입 성공/실패 처리
+    useEffect(() => {
+        if(authError) {
+            console.log('오류 발생');
+            console.log(authError);
+            return;
+        }
+        if(auth) {
+            console.log('회원가입 성공');
+            console.log(auth);
+            dispatch(check());
+        }
+    }, [auth, authError, dispatch]);
+
+    // user 값이 잘 설정되었는지 확인
+    useEffect(() => {
+        if(user) {
+            console.log('check API 성공');
+            console.log(user);
+        }
+    }, [user]);
+
+    return (...);
+};
+
+export default RegisterForm;
+
+
+이제 다시 회원가입을 시도해보자. 회원가입에 성공한 뒤에는 리덕스 개발자 도구를 열어서
+user 안에 값이 잘 들어가는지 확인해보자.
+
+회원가입에 성공했다면 홈 화면으로 라우트를 이동시켜 본다.
+RegisterForm에서 history 객체를 사용하려면 withRouter로 컴포넌트를 감싸주면 된다.
+
+
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { changeField, initializeForm, register } from "../../modules/auth";
+import AuthForm from '../../components/auth/AuthForm';
+import { check } from "../../modules/user";
+import { withRouter } from "react-router-dom";
+
+const RegisterForm = ({ history }) => {
+    ...
+
+    // user 값이 잘 설정되었는지 확인
+    useEffect(() => {
+        if(user) {
+            history.push('/');  // 홈 화면으로 이동
+        }
+    }, [history, user]);
+
+    return (...);
+};
+
+export default withRouter(RegisterForm);
+
+
+여기까지 잘 구현이 되었다면 회원가입에 성공하면 http://localhost:3000/ 으로 이동할 것이다.
+
+
+        24.2.5 로그인 구현
+
+회원가입을 구현할 때와 비슷하게 로그인 기능도 구현하겠다. LoginForm 컴포넌트를 다음과 같이 수정해 본다.
+
+
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { changeField, initializeForm, login } from "../../modules/auth";
+import AuthForm from '../../components/auth/AuthForm';
+import { withRouter } from "react-router-dom";
+import { check } from "../../modules/user";
+
+const LoginForm = ({ history }) => {
+    const dispatch = useDispatch();
+    const { form, auth, authError, user } = useSelector(({ auth, user }) => ({
+        form: auth.login,
+        auth: auth.auth,
+        authError: auth.authError,
+        user: user.user
+    }));
+    // 인풋 변경 이벤트 핸들러
+    const onChange = e => {
+        const { value, name } = e.target;
+        dispatch(
+            changeField({
+                form: 'login',
+                key: name,
+                value
+            })
+        );
+    };
+
+    // 폼 등록 이벤트 핸들러
+    const onSubmit = e => {
+        e.preventDefault();
+        const { username, password } = form;
+        dispatch(login({ username, password }));
+    };
+
+    // 컴포넌트가 처음 렌더링될 때 form을 초기화함
+    useEffect(() => {
+        dispatch(initializeForm('login'));
+    }, [dispatch]);
+
+    useEffect(() => {
+        if(authError) {
+            console.log('오류 발생');
+            console.log(authError);
+            return;
+        }
+        if(auth) {
+            console.log('로그인 성공');
+            dispatch(check());
+        }
+    }, [auth, authError, dispatch]);
+
+    useEffect(() => {
+        if(user) {
+            history.push('/');
+        }
+    }, [history, user]);
+
+    return (...);
+};
+
+export default withRouter(LoginForm);
+
+
+여기까지 다 작성했다면 http://localhost:3000/login 에 들어가서 회원가입에 성공한 계정으로 로그인해보자.
+http://localhost:3000/ 경로로 이동하는 것을 확인하자.
+
+
+        24.2.6 회원 인증 에러 처리하기
+
+회원 인증에서 중요한 기능은 거의 구현했다. 이제 요청이 실패했을 때 에러 메시지를 보여주는 UI를 준비해 보자.
+먼저 AuthForm 컴포넌트를 다음과 같이 수정한다.
+
+
+...
+
+const ErrorMessage = styled.div`
+    color: red;
+    text-align: center;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+`;
+
+const AuthForm = ({ type, form, onChange, onSubmit }) => {
+    const text = textMap[type];
+    return (
+        <AuthFormBlock>
+            <h3>{text}</h3>
+            <form onSubmit={onSubmit}>
+                <StyledInput 
+                    autoComplete="username" 
+                    name="username" 
+                    placeholder="아이디" 
+                    onChange={onChange}
+                    value={form.username}
+                    />
+                <StyledInput
+                    autoComplete="new-password"
+                    name="password"
+                    placeholder="비밀번호"
+                    type="password"
+                    onChange={onChange}
+                    value={form.password}
+                    />
+                {type === 'register' && (
+                    <StyledInput
+                        autoComplete="new-password"
+                        name="passwordConfirm"
+                        placeholder="비밀번호 확인"
+                        type="password"
+                        onChange={onChange}
+                        value={form.passwordConfirm}
+                        />
+                )}
+                <ErrorMessage>에러 발생!</ErrorMessage>
+                <ButtonWithMarginTop cyan fullWidth style={{ marginTop: '1rem' }}>
+                    {text}
+                </ButtonWithMarginTop>
+            </form>
+            <Footer>
+                {type === 'login' ? (
+                    <Link to="/register">회원가입</Link>
+                ) : (
+                    <Link to="/login">로그인</Link>
+                )}
+            </Footer>
+        </AuthFormBlock>
+    );
+};
+
+export default AuthForm;
+
+
+이제 로그인 또는 회원가입 페이지에 들어가서 '에러 발생!' 문구를 확인하자.
+
+잘 스타일링된 것을 확인했다면, props로 error 값을 받아 왔을 때 이를 렌더링해 주도록 하자.
+
+
+...
+
+const AuthForm = ({ type, form, onChange, onSubmit, error }) => {
+    const text = textMap[type];
+    return (
+        <AuthFormBlock>
+            <h3>{text}</h3>
+            <form onSubmit={onSubmit}>
+                <StyledInput 
+                    autoComplete="username" 
+                    name="username" 
+                    placeholder="아이디" 
+                    onChange={onChange}
+                    value={form.username}
+                    />
+                <StyledInput
+                    autoComplete="new-password"
+                    name="password"
+                    placeholder="비밀번호"
+                    type="password"
+                    onChange={onChange}
+                    value={form.password}
+                    />
+                {type === 'register' && (
+                    <StyledInput
+                        autoComplete="new-password"
+                        name="passwordConfirm"
+                        placeholder="비밀번호 확인"
+                        type="password"
+                        onChange={onChange}
+                        value={form.passwordConfirm}
+                        />
+                )}
+                {error && <ErrorMessage>{error}</ErrorMessage>}
+                <ButtonWithMarginTop cyan fullWidth style={{ marginTop: '1rem' }}>
+                    {text}
+                </ButtonWithMarginTop>
+            </form>
+            <Footer>
+                {type === 'login' ? (
+                    <Link to="/register">회원가입</Link>
+                ) : (
+                    <Link to="/login">로그인</Link>
+                )}
+            </Footer>
+        </AuthFormBlock>
+    );
+};
+
+export default AuthForm;
+
+
+AuthForm 에서 에러를 보여주기 위한 준비를 마쳤다. 이제 상황에 따라 RegisterForm 컴포넌트와 LoginForm 컴포넌트에서
+에러를 나타내 보자.
+LoginForm 에서 에러를 처리하는 것이 더 쉬우니 LoginForm 부터 수정해 본다.
+
+
+import React, { useEffect, useState } from 'react';
+...
+
+const LoginForm = ({ history }) => {
+    const [error, setError] = useState(null);
+    ...
+
+    useEffect(() => {
+        if(authError) {
+            console.log('오류 발생');
+            console.log(authError);
+            setError('로그인 실패');
+            return;
+        }
+        if(auth) {
+            console.log('로그인 성공');
+            dispatch(check());
+        }
+    }, [auth, authError, dispatch]);
+
+    ...
+
+    return (
+        <AuthForm 
+            type="login"
+            form={form}
+            onChange={onChange}
+            onSubmit={onSubmit}
+            error={error}
+            />
+    );
+};
+
+export default withRouter(LoginForm);
+
+
+이렇게 코드 몇 줄만으로 구현할 수 있다. 잘못된 계정으로 로그인해서 에러가 잘 뜨는지 확인해보자.
+
+이번에는 회원가입 시 발생하는 에러를 처리해 본다. 회원가입은 에러 처리가 조금 까다롭다.
+다음 상황에 대한 에러를 모두 처리해 준다.
+
+
+    - username, password, passwordConfirm 중 하나라도 비어 있을 때
+    - password 와 passwordConfirm 값이 일치하지 않을 때
+    - username 이 중복될 때
+
+
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { changeField, initializeForm, register } from "../../modules/auth";
+import AuthForm from '../../components/auth/AuthForm';
+import { check } from "../../modules/user";
+import { withRouter } from "react-router-dom";
+
+const RegisterForm = ({ history }) => {
+    const [error, setError] = useState(null);
+    const dispatch = useDispatch();
+    const { form, auth, authError, user } = useSelector(({ auth, user }) => ({
+        form: auth.register,
+        auth: auth.auth,
+        authError: auth.authError,
+        user: user.user
+    }));
+    // 인풋 변경 이벤트 핸들러
+    const onChange = e => {
+        const { value, name } = e.target;
+        dispatch(
+            changeField({
+                form: 'register',
+                key: name,
+                value
+            })
+        );
+    };
+
+    // 폼 등록 이벤트 핸들러
+    const onSubmit = e => {
+        e.preventDefault();
+        const { username, password, passwordConfirm } = form;
+        // 하나라도 비어 있다면
+        if([username, password, passwordConfirm].includes('')) {
+            setError('빈 칸을 모두 입력하세요.');
+            return;
+        }
+
+        // 비밀번호가 일치하지 않는다면
+        if(password !== passwordConfirm) {
+            setError('비밀번호가 일치하지 않습니다.');
+            dispatch(changeField({ form: 'register', key: 'password', value: '' }));
+            dispatch(changeField({ form: 'register', key: 'passwordConfirm', value: '' }));
+            return;
+        }
+        dispatch(register({ username, password }));
+    };
+
+    // 컴포넌트가 처음 렌더링될 때 form을 초기화함
+    useEffect(() => {
+        dispatch(initializeForm('register'));
+    }, [dispatch]);
+
+    // 회원가입 성공/실패 처리
+    useEffect(() => {
+        if(authError) {
+            // 계정명이 이미 존재할 때
+            if(authError.response.status === 409) {
+                setError('이미 존재하는 계정명입니다.');
+                return;
+            }
+            // 기타 이유
+            setError('회원가입 실패');
+            return;
+        }
+
+        if(auth) {
+            console.log('회원가입 성공');
+            console.log(auth);
+            dispatch(check());
+        }
+    }, [auth, authError, dispatch]);
+
+    // user 값이 잘 설정되었는지 확인
+    useEffect(() => {
+        if(user) {
+            console.log('check API 성공');
+            console.log(user);
+            history.push('/');  // 홈 화면으로 이동
+        }
+    }, [history, user]);
+
+    return (
+        <AuthForm 
+            type="register"
+            form={form}
+            onChange={onChange}
+            onSubmit={onSubmit}
+            error={error}
+            />
+    );
+};
+
+export default withRouter(RegisterForm);
+
+
+이제 다음 내용을 확인해보자. 값을 다 채우지 않거나, 일치하지 않는 비밀번호 확인 값을 넣거나,
+이미 가입한 계정명으로 가입을 시도하며 버튼을 눌러보자. 알맞은 오류가 잘 나타나면 잘 구현한 것이다.
+
+이제 로그인 및 회원가입 페이지에서 구현해야 할 기능을 거의 대부분 살펴봤다.
+다음 절에선 헤더 컴포넌트를 만들고, localStorage를 사용하여 사용자 로그인 정보를 기억하게 만들 때
+LoginForm 과 RegisterForm 을 다시 수정하겠다.

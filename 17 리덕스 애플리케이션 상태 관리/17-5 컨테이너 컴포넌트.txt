@@ -1,0 +1,356 @@
+            17.5 컨테이너 컴포넌트 만들기
+
+이제는 컴포넌트에서 리덕스 스토어에 접근하여 원하는 상태를 받아 오고, 또 액션도 디스패치해줄 차례이다.
+리덕스  스토어와 연동된 컴포넌트를 컨테이너 컴포넌트라고 부른다.
+
+
+        17.5.1 CounterContainer 만들기
+
+src 디렉터리에 containers 디렉터리를 생성하고, 그 안에 CounterContainer 컴포넌트를 만든다.
+
+
+import React from 'react';
+import Counter from '../components/Counter';
+
+const CounterContainer = () => {
+    return <Counter />;
+};
+
+export default CounterContainer;
+
+
+위 컴포넌트를 리덕스와 연동하려면 react-redux에서 제공하는 connect 함수를 사용해야 한다.
+이 함수는 다음과 같이 사용한다.
+
+
+connect(mapStateToProps, mapDispatchToProps)(연동할 컴포넌트)
+
+
+여기서 mapStateToProps 는 리덕스 스토어 안의 상태를 컴포넌트의 props로 넘겨주기 위해 설정하는 함수이고,
+mapDispatchToProps는 액션 생성 함수를 컴포넌트의 props로 넘겨주기 위해 사용하는 함수이다.
+이렇게 connect 함수를 호출하고 나면 또 다른 함수를 반환한다. 반환된 함수에 컴포넌트를 파라미터로 넣어 주면
+리덕스와 연동된 컴포넌트가 만들어진다.
+
+위 코드를 쉽게 풀면 다음과 같은 형태이다.
+
+
+const makeContainer = connect(mapStateToProps, mapDispatchToProps)
+makeContainer(타깃 컴포넌트)
+
+
+자, 이제 CounterContainer 컴포넌트에서 connect를 사용해 보자.
+
+
+import React from 'react';
+import Counter from '../components/Counter';
+import { connect } from "react-redux";
+
+const CounterContainer = ({ number, increase, decrease }) => {
+    return (
+        <Counter number={number} onIncrease={increase} onDecrease={decrease} />
+    );
+};
+
+const mapStateToProps = state => ({
+    number: state.counter.number
+});
+const mapDispatchToProps = dispatch => ({
+    // 임시 함수
+    increase: () => {
+        console.log('increase');
+    },
+    decrease: () => {
+        console.log('decrease');
+    },
+});
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(CounterContainer);
+
+
+mapStateToProps와 mapDispatchToProps에서 반환하는 객체 내부의 값들은 컴포넌트의 props로 전달된다.
+mapStateToProps는 state를 파라미터로 받아 오며, 이 값은 현재 스토어가 지니고 있는 상태를 가리킨다.
+mapDispatchToProps의 경우 store의 내장 함수 dispatch를 파라미터로 받아온다. 현재 mapDispatchToProps에서는
+진행 절차를 설명하기 위해 임시로 console.log를 사용하고 있다.
+
+다음으로 App 에서 Counter를 CounterContainer로 교체하자.
+
+
+import React from 'react';
+import Todos from './components/Todos';
+import CounterContainer from './containers/CounterContainer';
+
+const App = () => {
+  return (
+    <div>
+      <CounterContainer />
+      <hr />
+      <Todos />
+    </div>
+  )
+}
+
+export default App;
+
+
+브라우저를 열어서 +1, -1 를 눌러, 콘솔에 increase, decrease가 찍히는 것을 확인하자.
+
+자, 이번에는 console.log 대신 액션 생성 함수를 불러와서 액션 객체를 만들고 디스패치해 주겠다.
+
+
+import React from 'react';
+import Counter from '../components/Counter';
+import { connect } from "react-redux";
+import { increase, decrease } from "../modules/counter";
+
+const CounterContainer = ({ number, increase, decrease }) => {
+    return (
+        <Counter number={number} onIncrease={increase} onDecrease={decrease} />
+    );
+};
+
+const mapStateToProps = state => ({
+    number: state.counter.number
+});
+const mapDispatchToProps = dispatch => ({
+    // 임시 함수
+    increase: () => {
+        dispatch(increase());
+    },
+    decrease: () => {
+        dispatch(decrease());
+    },
+});
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(CounterContainer);
+
+
+이제 다시 +1과 -1 버튼을 눌러보자. 그리고 리덕스 개발자 도구로도 한번 확인해보자.
+
+connect 함수를 사용할 때는 일반적으로 위 코드와 같이 mapStateToProps와 mapDispatchToProps를 미리 선언해 놓고 사용한다.
+하지만 connect 함수 내부에 익명 함수 형태로 선언해도 문제가 되지 않는다.
+이렇게 보면 코드가 더 깔끔해지는데, 취향에 따라 작성해본다.
+
+
+import React from 'react';
+import Counter from '../components/Counter';
+import { connect } from "react-redux";
+import { increase, decrease } from "../modules/counter";
+
+const CounterContainer = ({ number, increase, decrease }) => {
+    return (
+        <Counter number={number} onIncrease={increase} onDecrease={decrease} />
+    );
+};
+
+export default connect(
+    state => ({
+        number: state.counter.number
+    }),
+    dispatch => ({
+        increase: () => dispatch(increase()),
+        decrease: () => dispatch(decrease())
+    })
+)(CounterContainer);
+
+
+위 코드에서는 액션 생성 함수를 호출하여 디스패치하는 코드가 한 줄이기 때문에 불필요한 코드 블록을 생략해 주었다.
+다음 두 줄의 코드는 작동 방식이 완전히 같다.
+
+
+increase: () => dispatch(increase()),
+increase: () => { return dispatch(increase()) },
+
+
+컴포넌트에서 액션을 디스패치하기 위해 각 액션 생성 함수를 호출하고 dispatch로 감싸는 작업이 조금 번거로울 수 있다.
+특히 액션 생성 함수의 개수가 많아진다면 더더욱 그럴 것이다.
+이와 같은 겨웅에는 리덕스에서 제공하는 bindActionCreators 유틸 함수를 사용하면 간편하다.
+
+
+import React from 'react';
+import Counter from '../components/Counter';
+import { connect } from "react-redux";
+import { increase, decrease } from "../modules/counter";
+import { bindActionCreators } from "redux";
+
+const CounterContainer = ({ number, increase, decrease }) => {
+    return (
+        <Counter number={number} onIncrease={increase} onDecrease={decrease} />
+    );
+};
+
+export default connect(
+    state => ({
+        number: state.counter.number
+    }),
+    dispatch => bindActionCreators(
+        {
+            increase,
+            decrease,
+        },
+        dispatch,
+    ),
+)(CounterContainer);
+
+
+브라우저를 열어서 전과 똑같이 작동하는지 알아보자.
+방금 작성한 방법보다 한 가지 더 편한 방법이 있다. 바로 mapDispatchToProps에 해당하는 파라미터를 함수 형태가 아닌
+액션 생성 함수로 이루어진 객체 형태로 넣어 주는 것이다. 다음과 같다.
+
+
+import React from 'react';
+import Counter from '../components/Counter';
+import { connect } from "react-redux";
+import { increase, decrease } from "../modules/counter";
+
+const CounterContainer = ({ number, increase, decrease }) => {
+    return (
+        <Counter number={number} onIncrease={increase} onDecrease={decrease} />
+    );
+};
+
+export default connect(
+    state => ({
+        number: state.counter.number
+    }),
+    {
+        increase,
+        decrease,
+    },
+)(CounterContainer);
+
+
+위와 같이 두 번째 파라미터를 아예 객체 형태로 넣어 주면 connect 함수가 내부적으로
+bindActionCreators 작업을 대신해 준다.
+
+
+    17.5.2. TodosContainer 만들기
+
+이번에는 Todos 컴포넌트를 위한 컨테이너인 TodosContainer를 작성해본다.
+CounterContainer를 만들 때 배웠던 connect 함수를 사용하고, mapDispatchToProps를 짧고 간단히 쓰는 방법을 작성해보자.
+
+
+import React from 'react';
+import { connect } from "react-redux";
+import { changeInput, insert, toggle, remove } from "../modules/todos";
+import Todos from '../components/Todos';
+
+const TodosContainer = ({
+    input,
+    todos,
+    changeInput,
+    insert,
+    toggle,
+    remove
+}) => {
+    return (
+        <Todos
+            input={input}
+            todos={todos}
+            onChangeInput={changeInput}
+            onInsert={insert}
+            onToggle={toggle}
+            onRemove={remove}
+            />
+    );
+};
+
+export default connect(
+    // 비구조화 할당을 통해 todos를 분리
+    // state.todos.input 대신 todos.input 사용
+    ({ todos }) => ({
+        input: todos.input,
+        todos: todos.todos,
+    }),
+    {
+        changeInput,
+        insert,
+        toggle,
+        remove,
+    },
+)(TodosContainer);
+
+
+이전에 todos 모듈에서 작성했던 액션 생성 함수와 상태 안에 있던 값을 컴포넌트의 props 전달해 주었다.
+컨테이너 컴포넌트를 다 만든 후에는 App 컴포넌트에서 보여 주던 Todos 컴포넌트를 TodosContainer 컴포넌트로 교체한다.
+
+
+import React from 'react';
+import CounterContainer from './containers/CounterContainer';
+import TodosContainer from './containers/TodosContainer';
+
+const App = () => {
+  return (
+    <div>
+      <CounterContainer />
+      <hr />
+      <TodosContainer />
+    </div>
+  )
+}
+
+export default App;
+
+
+그 다음에 Todos 컴포넌트에서 받아온 props를 사용하도록 구현해 본다.
+
+
+import React from 'react';
+
+const TodoItem = ({ todo, onToggle, onRemove }) => {
+    return (
+        <div>
+            <input 
+                type="checkbox" 
+                onClick={() => onToggle(todo.id)}
+                checked={todo.done}
+                readOnly={true}
+                />
+            <span style={{ textDecoration: todo.done ? 'line-through' : 'none' }}>
+                {todo.text}
+            </span>
+            <button onClick={() => onRemove(todo.id)}>삭제</button>
+        </div>
+    );
+};
+
+const Todos = ({
+    input,  // 인풋에 입력되는 텍스트
+    todos,  // 할 일 목록이 들어 있는 객체
+    onChangeInput,
+    onInsert,
+    onToggle,
+    onRemove
+}) => {
+    const onSubmit = e => {
+        e.preventDefault();
+        onInsert(input);
+        onChangeInput('');  // 등록 후 인풋 초기화
+    };
+    const onChange = e => onChangeInput(e.target.value);
+    return (
+        <div>
+            <form onSubmit={onSubmit}>
+                <input value={input} onChange={onChange}/>
+                <button type="submit">등록</button>
+            </form>
+            <div>
+                {todos.map(todo => (
+                    <TodoItem
+                        todo={todo}
+                        key={todo.id}
+                        onToggle={onToggle}
+                        onRemove={onRemove}
+                        />
+                ))}
+            </div>
+        </div>
+    );
+};
+
+export default Todos;

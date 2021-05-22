@@ -1,0 +1,938 @@
+            26.2 포스트 목록 페이지 구현하기
+
+이번에는 여러 개의 포스트를 보여 주는 포스트 목록 페이지를 구현해 본다.
+
+
+        26.2.1 PostList UI 준비하기
+
+PostList 라는 컴포넌트를 만든다. 이 컴포넌트에서는 포스트들을 배열로 받아와서 렌더링해 준다.
+사용자가 로그인 중이라면 페이지 상단 우측에 새 글 작성하기 버튼을 보여준다.
+
+components/posts 디렉터리를 만들고, 그 안에 PostList 컴포넌트를 다음과 같이 작성한다.
+
+
+import React from 'react';
+import styled from 'styled-components';
+import Responsive from '../common/Responsive';
+import Button from '../common/Button';
+import palette from '../../lib/styles/palette';
+
+const PostListBlock = styled(Responsive)`
+    margin-top: 3rem;
+`;
+
+const WritePostButtonWrapper = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 3rem;
+`;
+
+const PostItemBlock = styled.div`
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+    /* 맨 위 포스트는 padding-top 없음 */
+    &:first-child {
+        padding-top: 0;
+    }
+    & + & {
+        border-top: 1px solid ${palette.gray[2]};
+    }
+
+    h2 {
+        font-size: 2rem;
+        margin-bottom: 0;
+        margin-top: 0;
+        &:hover {
+            color: ${palette.gray[6]};
+        }
+    }
+
+    p {
+        margin-top: 2rem;
+    }
+`;
+
+const SubInfo = styled.div`
+    /* margin-top: 1rem; */
+    color: ${palette.gray[6]};
+
+    /* span 사이에 가운뎃점 문자 보여 주기 */
+    span + span:before {
+        color: ${palette.gray[4]};
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+        content: '\\B7';    /* 가운뎃점 문자 */
+    }
+`;
+
+const Tags = styled.div`
+    margin-top: 0.5rem;
+    .tag {
+        display: inline-block;
+        color: ${palette.cyan[7]};
+        text-decoration: none;
+        margin-right: 0.5rem;
+        &:hover {
+            color: ${palette.cyan[6]};
+        }
+    }
+`;
+
+const PostItem = () => {
+    return (
+        <PostItemBlock>
+            <h2>제목</h2>
+            <SubInfo>
+                <span>
+                    <b>username</b>
+                </span>
+                <span>{new Date().toLocaleDateString()}</span>
+            </SubInfo>
+            <Tags>
+                <div className="tag">#태그1</div>
+                <div className="tag">#태그2</div>
+            </Tags>
+            <p>포스트 내용의 일부분...</p>
+        </PostItemBlock>
+    );
+};
+
+const PostList = () => {
+    return (
+        <PostListBlock>
+            <WritePostButtonWrapper>
+                <Button cyan to="/write">
+                    새 글 작성하기
+                </Button>
+            </WritePostButtonWrapper>
+            <div>
+                <PostItem />
+                <PostItem />
+                <PostItem />
+            </div>
+        </PostListBlock>
+    );
+};
+
+export default PostList;
+
+
+이 컴포넌트에 사용된 SubInfo 컴포넌트와 Tags 컴포넌트는 PostViewer 에서 사용한 코드와 같다.
+한 가지 차이점이라면, SubInfo 컴포넌트의 경우 margin-top 이 없다는 것이다.
+
+이렇게 똑같은 코드를 두 번 선언하는 대신, SubInfo 컴포넌트와 Tags 컴포넌트를 common 디렉터리에 분리시켜서 재사용 해보자.
+그리고 분리시킬 때 계정명이 나타나는 부분과 같은 태그가 나타나는 부분에 Link를 사용하여 클릭 시 이동할 주소를 설정한다.
+
+
+import React from 'react';
+import styled, { css } from 'styled-components';
+import { Link } from "react-router-dom";
+import palette from '../../lib/styles/palette';
+
+const SubInfoBlock = styled.div`
+    ${props =>
+        props.hasMarginTop &&
+        css`
+            margin-top: 1rem;
+        `}
+    color: ${palette.gray[6]};
+    
+    /* span 사이에 가운뎃점 문자 보여 주기 */
+    span + span:before {
+        color: ${palette.gray[4]};
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+        content: '\\B7';    /* 가운뎃점 문자 */
+    }
+`;
+
+const SubInfo = ({ username, publishedDate, hasMarginTop }) => {
+    return (
+        <SubInfoBlock hasMarginTop={hasMarginTop}>
+            <span>
+                <b>
+                    <Link to={`/@${username}`}>{username}</Link>
+                </b>
+            </span>
+            <span>{new Date(publishedDate).toLocaleDateString()}</span>
+        </SubInfoBlock>
+    );
+};
+
+export default SubInfo;
+
+
+SubInfo 컴포넌트는 hasMarginTop 값이 true이면 상단 여백을 주고, 그렇지 않으면 여백이 없다.
+그리고 username 과 publishedDate 를 props로 받아 와서 보여주도록 설정했다.
+
+다음으로 Tags 컴포넌트를 만든다.
+
+
+import React from 'react';
+import styled from 'styled-components';
+import palette from '../../lib/styles/palette';
+import { Link } from "react-router-dom";
+
+const TagsBlock = styled.div`
+    margin-top: 0.5rem;
+    .tag {
+        display: inline-block;
+        color: ${palette.cyan[7]};
+        text-decoration: none;
+        margin-right: 0.5rem;
+        &:hover {
+            color: ${palette.cyan[6]};
+        }
+    }
+`;
+
+const Tags = ({ tags }) => {
+    return (
+        <TagsBlock>
+            {tags.map(tag => (
+                <Link className="tag" to={`/?tag=${tag}`} key={tag}>
+                    #{tag}
+                </Link>
+            ))}
+        </TagsBlock>
+    );
+};
+
+export default Tags;
+
+
+Tags 컴포넌트에서는 tag 값을 props로 받아 와서 태그 목록을 렌더링해 준다.
+각 태그 항목을 Link 컴포넌트로 작성했으며, 클릭했을 때 이동 경로는 /?tag=태그 로 설정했다.
+
+SubInfo 컴포넌트와 Tags 컴포넌트를 다 만들었으면, PostList에서 기존 SubInfo와 Tags를 지우고 
+새로 만든 컴포넌트를 불러와서 사용하자.
+
+
+import React from 'react';
+import styled from 'styled-components';
+import Responsive from '../common/Responsive';
+import Button from '../common/Button';
+import palette from '../../lib/styles/palette';
+import SubInfo from '../common/SubInfo';
+import Tags from '../common/Tags';
+
+...
+
+const PostItem = () => {
+    return (
+        <PostItemBlock>
+            <h2>제목</h2>
+            <SubInfo username="username" publishedDate={new Date()} />
+            <Tags tags={[ '태그1', '태그2', '태그3' ]} />
+            <p>포스트 내용의 일부분...</p>
+        </PostItemBlock>
+    );
+};
+
+...
+
+
+컴포넌트를 수정한 뒤, PostListPage 컴포넌트에서 PostList 컴포넌트를 렌더링하여 작성한 컴포넌트가 잘 나타나는지 확인하자.
+
+
+import React from 'react';
+import HeaderContainer from '../containers/common/HeaderContainer';
+import PostList from '../components/posts/PostList';
+
+const PostListPage = () => {
+    return (
+        <>
+            <HeaderContainer />
+            <PostList />
+        </>
+    );
+};
+
+export default PostListPage;
+
+
+PostList 컴포넌트가 잘 나타난다.
+이번에는 PostItem 컴포넌트를 만들 때 SubInfo 와 Tags 컴포넌트를 재사용할 수 있도록 분리했었다.
+이 컴포넌트들을 이전 절에서 만든 PostViewer에서 재사용해 보자.
+
+
+import React from 'react';
+import styled from 'styled-components';
+import palette from '../../lib/styles/palette';
+import Responsive from '../common/Responsive';
+import SubInfo from '../common/SubInfo';
+import Tags from '../common/Tags';
+
+...
+
+const PostViewer = ({ post, error, loading }) => {
+    // 에러 발생 시
+    if(error) {
+        if(error.response && error.response.status === 404) {
+            return <PostViewerBlock>존재하지 않는 포스트입니다.</PostViewerBlock>
+        }
+        return <PostViewerBlock>오류 발생!</PostViewerBlock>
+    }
+
+    // 로딩 중이거나 아직 포스트 데이터가 없을 때
+    if(loading || !post) {
+        return null;
+    }
+
+    const { title, body, user, publishedDate, tags } = post;
+
+    return (
+        <PostViewerBlock>
+            <PostHead>
+                <h1>{title}</h1>
+                <SubInfo
+                    username={user.username}
+                    publishedDate={publishedDate}
+                    hasMarginTop
+                    />
+                <Tags tags={tags} />
+            </PostHead>
+            <PostContent dangerouslySetInnerHTML={{ __html: body }} />
+        </PostViewerBlock>
+    );
+};
+
+export default PostViewer;
+
+
+여러 곳에서 재사용할 수 있는 컴포넌트는 이렇게 따로 분리하여 사용하면, 코드의 양도 줄일 수 있을 뿐 아니라
+유지 보수성도 높일 수 있다.
+
+
+        26.2.2 포스트 목록 조회 API 연동하기
+
+PostList 컴포넌트에서 실제 데이터를 보여 줄 수 있도록 API를 연동해 본다. 우리가 사용할 list API는 username, page, tag 값을
+쿼리 값으로 넣어서 사용한다. API를 사용할 때 파라미터로 문자열들을 받아 와서 직접 조합해도 되지만, 여기서는 qs 라이브러리를
+사용하여 쿼리 값을 생성하겠다. 이 라이브러리를 사용하면 쿼리 값을 더 편리하게 생성하고 JSON으로 변환할 수 있다.
+
+yarn 으로 qs를 설치한다.
+
+
+$ yarn add qs
+
+
+그리고 lib/api/posts.js 파일에 다음 함수를 추가한다.
+
+
+import client from './client';
+import qs from 'qs';
+
+export const writePost = ({ title, body, tags }) =>
+    client.post('/api/posts', { title, body, tags });
+
+export const readPost = id => client.get(`/api/posts/${id}`);
+
+export const listPosts = ({ page, username, tag }) => {
+    const queryString = qs.stringify({
+        page,
+        username,
+        tag,
+    });
+    return client.get(`/api/posts?${queryString}`);
+};
+
+
+listPosts API를 호출할 때 파라미터로 값을 넣어 주면 /api/posts?username=tester&page=2 와 같이 주소를 만들어서 호출한다.
+이제 위 요청의 상태를 관리하는 리덕스 모듈을 만들어보자. modules 디렉터리에 posts.js 파일을 만들어서 다음 코드를 작성한다.
+
+
+import { createAction, handleActions } from "redux-actions";
+import createRequestSaga, { createRequestActionTypes } from '../lib/createRequestSaga';
+import * as postsAPI from '../lib/api/posts';
+import { takeLatest } from "redux-saga/effects";
+
+const [
+    LIST_POSTS,
+    LIST_POSTS_SUCCESS,
+    LIST_POSTS_FAILURE,
+] = createRequestActionTypes('posts/LIST_POSTS');
+
+export const listPosts = createAction(
+    LIST_POSTS,
+    ({ tag, username, page }) => ({ tag, username, page }),
+);
+
+const listPostsSaga = createRequestSaga(LIST_POSTS, postsAPI.listPosts);
+export function* postsSaga() {
+    yield takeLatest(LIST_POSTS, listPostsSaga);
+}
+
+const initialState = {
+    posts: null,
+    error: null,
+};
+
+const posts = handleActions(
+    {
+        [LIST_POSTS_SUCCESS]: (state, { payload: posts }) => ({
+            ...state,
+            posts,
+        }),
+        [LIST_POSTS_FAILURE]: (state, { payload: error }) => ({
+            ...state,
+            error,
+        }),
+    },
+    initialState,
+);
+
+export default posts;
+
+
+다 작성한 뒤에는 루트 리듀서와 루트 사가에 방금 만든 리듀서와 사가를 등록하자.
+
+
+import { combineReducers } from 'redux';
+import auth, { authSaga } from './auth';
+import loading from './loading';
+import { all } from "redux-saga/effects";
+import user, { userSaga } from './user';
+import write, { writeSaga } from './write';
+import post, { postSaga } from './post';
+import posts, { postsSaga } from "./posts";
+
+const rootReducer = combineReducers({
+    auth,
+    loading,
+    user,
+    write,
+    post,
+    posts,
+});
+
+export function* rootSaga() {
+    yield all([authSaga(), userSaga(), writeSaga(), postSaga(), postsSaga()]);
+}
+
+export default rootReducer;
+
+
+다음으로 containers 디렉터리 안에 posts 디렉터리를 만들고, 그 안에 PostListContainer 컴포넌트를 만든다.
+이 컴포넌트는 주소에 있는 쿼리 파라미터를 추출하여 우리가 만들었던 listPosts API를 호출해 준다.
+
+
+import React, { useEffect } from 'react';
+import qs from 'qs';
+import { withRouter } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import PostList from '../../components/posts/PostList';
+import { listPosts } from "../../modules/posts";
+
+const PostListContainer = ({ location, match }) => {
+    const dispatch = useDispatch();
+    const { posts, error, loading, user } = useSelector(
+        ({ posts, loading, user}) => ({
+            posts: posts.posts,
+            error: posts.error,
+            loading: loading['posts/LIST_POSTS'],
+            user: user.user,
+        }),
+    );
+    useEffect(() => {
+        const { username } = match.params;
+        const { tag, page } = qs.parse(location.search, {
+            ignoreQueryPrefix: true,
+        });
+        dispatch(listPosts({ tag, username, page }));
+    }, [dispatch, location.search]);
+
+    return (
+        <PostList
+            loading={loading}
+            error={error}
+            posts={posts}
+            showWriteButton={user}
+            />
+    );
+};
+
+export default withRouter(PostListContainer);
+
+
+PostList 컴포넌트를 사용할 때 showWriteButton props를 현재 로그인 중인 사용자의 정보를 지니고 있는 user 객체로 설정해 주었다.
+이렇게 하면 user 객체가 유효할 때, 즉 사용자가 로그인 중일 때만 포스트를 작성하는 버튼이 나타난다.
+
+컨테이너 컴포넌트를 완성한 후, PostListPage 컴포넌트에서 PostList를 PostListContainer 로 대체시키자.
+
+
+import React from 'react';
+import HeaderContainer from '../containers/common/HeaderContainer';
+import PostListContainer from '../containers/posts/PostListContainer';
+
+const PostListPage = () => {
+    return (
+        <>
+            <HeaderContainer />
+            <PostListContainer />
+        </>
+    );
+};
+
+export default PostListPage;
+
+
+그리고 PostList 에서 받아 온 props 에 따라 결과물을 보여주자.
+
+
+import React from 'react';
+import styled from 'styled-components';
+import { Link } from "react-router-dom";
+import Responsive from '../common/Responsive';
+import Button from '../common/Button';
+import palette from '../../lib/styles/palette';
+import SubInfo from '../common/SubInfo';
+import Tags from '../common/Tags';
+
+...
+
+const PostItem = ({ post }) => {
+    const { publishedDate, user, tags, title, body, _id } = post;
+    return (
+        <PostItemBlock>
+            <h2>
+                <Link to={`/@${user.username}/${_id}`}>{title}</Link>
+            </h2>
+            <SubInfo 
+                username={user.username}
+                publishedDate={new Date(publishedDate)} 
+                />
+            <Tags tags={tags} />
+            <p>{body}</p>
+        </PostItemBlock>
+    );
+};
+
+const PostList = ({ posts, loading, error, showWriteButton }) => {
+    // 에러 발생 시
+    if(error) {
+        return <PostListBlock>에러가 발생했습니다.</PostListBlock>
+    }
+    return (
+        <PostListBlock>
+            <WritePostButtonWrapper>
+                {showWriteButton && (
+                    <Button cyan to="/write">
+                        새 글 작성하기
+                    </Button>
+                )}
+            </WritePostButtonWrapper>
+            {/* 로딩 중이 아니고, 포스트 배열이 존재할 때만 보여줌 */}
+            {!loading && posts && (
+                <div>
+                    {posts.map(post => (
+                        <PostItem post={post} key={post._id} />
+                    ))}
+                </div>
+            )}
+        </PostListBlock>
+    );
+};
+
+export default PostList;
+
+
+여기까지 작성했다면 페이지가 잘 나타나는지 확인해보자.
+
+내용이 나타나는 부분에 HTML 태그가 그대로 보인다. 이 태그를 없애는 작업은 서버 쪽에서 해 주어야 한다.
+물론 클라이언트에서 처리하는 방법도 있지만, 현재는 포스트 리스팅을 할 때 body 의 글자수를 200자로 제한하는 기능이 있다.
+이 때문에 완성된 HTML이 아니라 HTML의 일부분만 전달되어 HTML 태그를 없애는 작업이 잘 이루어지지 않을 가능성이 있다.
+
+
+        26.2.3 HTML 필터링 하기
+
+sanitize-html 이라는 라이브러리를 사용하여 HTML을 필터링해 보겠다. 이 라이브러리는 HTML을 작성하고 보여 주어여 하는
+서비스에서 매우 유용하다. 단순히 HTML을 제거하는 기능뿐만 아니라 특정 HTML만 허용하는 기능도 있기 때문에
+글쓰기 API에서 사용하면 손쉽게 악성 스크립트 삽입을 막을 수 있다.
+
+백엔드 프로젝트 디렉터리에서 yarn 을 사용하여 sanitize-html 을 설치하자.
+
+
+$ yarn add sanitize-html
+
+
+이어서 백엔드 프로젝트의 posts.ctrl.js 를 수정한다. 먼저 맨 위에 sanitize-html 을 불러오자.
+
+
+import Post from '../../models/post';
+import mongoose from 'mongoose';
+import Joi from '@hapi/joi';
+import sanitizeHtml from 'sanitize-html';
+
+...
+
+
+앞으로 총 세 개의 함수를 수정할 것이다. 우선 포스트 목록을 조회하는 list 함수를 다음과 같이 수정해 보자.
+
+
+// html을 없애고 내용이 너무 길면 200자로 제한하는 함수
+const removeHtmlAndShorten = body => {
+    const filtered = sanitizeHtml(body, {
+        allowedTags: [],
+    });
+    return filtered.length < 200 ? filtered : `${filtered.slice(0, 200)}...`;
+};
+
+/*
+    GET /api/posts?username=&tag=&page=
+*/
+export const list = async (ctx) => {
+    ...
+        ctx.body = posts.map((post) => ({
+            ...post,
+            body: removeHtmlAndShorten(post.body),
+        }));
+    } catch (e) {
+        ctx.throw(500, e);
+    }
+};
+
+
+기존에는 문자열 길이만 제한했는데, 이번에는 HTML을 제거하고 문자열 길이를 200자로 제한했다.
+이 작업을 위해 removeHtmlAndShorten 이라는 함수도 새로 만들었다.
+
+그다음에 수정해야 할 API는 포스트의 작성 및 수정에 관한 것이다. 포스트를 작성하고 수정할 때는 모든 HTML을 제거하는 것이 아니라,
+악성 스크립트가 주입되는 것을 방지하기 위해 특정 태그들만 허용해 준다.
+
+sanitize-html은 HTML 의 특정 태그와 특정 속성만 허용할 수 있다. 코드의 상단에 sanitizeOptions 라는 객체를 선언하자.
+
+
+import Post from '../../models/post';
+import mongoose from 'mongoose';
+import Joi from '@hapi/joi';
+import sanitizeHtml from 'sanitize-html';
+
+const { ObjectId } = mongoose.Types;
+
+const sanitizeOption = {
+    allowedTags: [
+        'h1',
+        'h2',
+        'b',
+        'i',
+        'u',
+        's',
+        'p',
+        'ul',
+        'ol',
+        'li',
+        'blockquote',
+        'a',
+        'img'
+    ],
+    allowedAttributes: {
+        a: ['href', 'name', 'target'],
+        img: ['src'],
+        li: ['class'],
+    },
+    allowedSchemes: ['data', 'http'],
+};
+
+...
+
+
+sanitizeOptions 객체는 HTML을 필터링할 때 허용할 것을 설정해 준다. 더 자세한 설정은
+https://www.npmjs.com/package/sanitize-html 공식 메뉴얼을 참고하자.
+
+이제 write 함수와 update 함수를 업데이트해 보자.
+
+
+/*
+    POST /api/posts
+    {
+        title: '제목',
+        body: '내용',
+        tags: ['태그1', '태그2']
+    }
+*/
+export const write = async (ctx) => {
+    ...
+    const post = new Post({
+        title,
+        body: sanitizeHtml(body, sanitizeOption),
+        tags,
+        user: ctx.state.user,
+    });
+    try {
+        await post.save();
+        ctx.body = post;
+    } catch (e) {
+        ctx.throw(500, e);
+    }
+};
+
+
+이어서 update 함수도 수정해 본다.
+
+
+/*
+    PATCH /api/posts/:id
+    {
+        title: '수정',
+        body: '수정 내용',
+        tags: ['수정', '태그']
+    }
+*/
+export const update = async (ctx) => {
+    ...
+
+    const nextData = { ...ctx.request.body };   // 객체를 복사하고
+    // body 값이 주어졌으면 HTML 필터링
+    if(nextData.body) {
+        nextData.body = sanitizeHtml(nextData.body, sanitizeOption);
+    }
+
+    try {
+        const post = await Post.findByIdAndUpdate(id, nextData, {
+            new: true, // 이 값을 설정하면 업데이트된 데이터를 반환한다.
+            // false 일 때는 업데이트되기 전의 데이터를 반환한다.
+        }).exec();
+        if (!post) {
+            ctx.status = 404;
+            return;
+        }
+        ctx.body = post;
+    } catch (e) {
+        ctx.throw(500, e);
+    }
+};
+
+
+코드를 모두 수정했으면, http://localhost:3000/ 에 들어가서 HTML 태그가 제거된 상태로 포스트 목록이 나타나는지 확인한다.
+
+
+이전에는 p 태그와 b 태그가 있었는데, 더 이상 보이지 않는다.
+그리고 다음과 같이 Postman 으로 script 태그를 넣어서 포스트 작성 API를 요청해 보자.
+
+
+POST http://localhost:4000/api/posts
+{
+    "title": "스크립트 넣어 보기",
+    "body": "<p>안녕하세요 <b>리액트</b></p><script>alert('hello world!')</script>",
+    "tags": ["스크립트"]
+}
+
+
+body 안에 p 태그, b 태그, script 태그를 사용했다. 이렇게 요청했을 때 script 태그는 제외되고
+나머지 태그만 남아 있으면 HTML 필터링은 성공이다. JSON 응답은 다음과 같다.
+
+
+{
+    "tags": [
+        "스크립트"
+    ],
+    "_id": "5ff00fe006027a314495d3a1",
+    "title": "스크립트 넣어 보기",
+    "body": "<p>안녕하세요 <b>리액트</b></p>",
+    "user": {
+        "_id": "5fedcff0dc6a9d515881155f",
+        "username": "test"
+    },
+    "publishedDate": "2021-01-02T06:17:04.146Z",
+    "__v": 0
+}
+
+
+        26.2.4 페이지네이션 구현하기
+
+이번에는 페이지네이션 기능을 구현해 보겠다. list API를 만들 때 마지막 페이지 번호를 HTTP 헤더를 통해 클라이언트에 전달하도록
+설정했다. 그러나 요청을 관리하는 사가를 쉽게 만들기 위해 작성한 createRequestSaga에서는 SUCCESS 액션을 발생시킬 때
+payload에 response.data 값만 넣어 주기 때문에 현재 구조로는 헤더를 확인할 수 있다.
+
+그렇기 때문에 createRequestSaga 를 조금 수정해 보자.
+
+
+...
+
+export default function createRequestSaga(type, request) {
+    const SUCCESS = `${type}_SUCCESS`;
+    const FAILURE = `${type}_FAILURE`;
+
+    return function*(action) {
+        yield put(startLoading(type));  // 로딩 시작
+        try {
+            const response = yield call(request, action.payload);
+            yield put({
+                type: SUCCESS,
+                payload: response.data,
+                meta: response,
+            });
+        } catch (e) {
+            yield put({
+                type: FAILURE,
+                payload: e,
+                error: true,
+            });
+        }
+        yield put(finishLoading(type)); // 로딩 끝
+    };
+}
+
+
+이렇게 액션 안에 meta 값을 response 로 넣어 주면 나중에 HTTP 헤더 및 상태 코드를 쉽게 조회할 수 있다.
+posts 리덕스 모듈을 열어서 다음과 같이 수정해 주자.
+
+
+...
+
+const initialState = {
+    posts: null,
+    error: null,
+    lastPage: 1,
+};
+
+const posts = handleActions(
+    {
+        [LIST_POSTS_SUCCESS]: (state, { payload: posts, meta: response }) => ({
+            ...state,
+            posts,
+            lastPage: parseInt(response.headers['last-page'], 10),  // 문자열을 숫자로 변환
+        }),
+        [LIST_POSTS_FAILURE]: (state, { payload: error }) => ({
+            ...state,
+            error,
+        }),
+    },
+    initialState,
+);
+
+
+이제 리덕스 스토어 안에 마지막 페이지 번호를 lastPage라는 값으로 담아 둘 수 있다.
+페이지네이션을 위한 컴포넌트 Pagination.js 를 components/posts 디렉터리에 작성해 보자.
+
+
+import React from 'react';
+import styled from 'styled-components';
+import qs from 'qs';
+import Button from '../common/Button';
+
+const PaginationBlock = styled.div`
+    width: 320px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+`;
+
+const PageNumber = styled.div``;
+
+const buildLink = ({ username, tag, page }) => {
+    const query = qs.stringify({ tag, page });
+    return username ? `/@${username}?${query}` : `/?${query}`;
+};
+
+const Pagination = ({ page, lastPage, username, tag }) => {
+    return (
+        <PaginationBlock>
+            <Button
+                disabled={page === 1}
+                to={
+                    page === 1 ? undefined : buildLink({ username, tag, page: page - 1 })
+                }>
+                이전
+            </Button>
+            <PageNumber>{page}</PageNumber>
+            <Button
+                disabled={page === lastPage}
+                to={
+                    page === lastPage ? undefined : buildLink({ username, tag, page: page + 1 })
+                }>
+                다음
+            </Button>
+        </PaginationBlock>
+    );
+};
+
+export default Pagination;
+
+
+이 컴포넌트에서는 props 로 현재 선택된 계정명, 태그, 현재 페이지 숫자, 마지막 페이지 숫자를 가져온다.
+사용자가 이 컴포넌트에 있는 버튼을 클릭하면, props로 받아 온 값을 사용하여 이동해야 할 다음 경로를 설정해 준다.
+그리고 첫 번째 페이지일 때는 이전 버튼이 비활성화되고, 마지막 페이지일 때는 다음 버튼이 비활성화 된다.
+
+컴포넌트를 다 만든 뒤에는 Button 컴포넌트에 비활성화된 스타일을 설정해 주자.
+비활성화 스타일은 :disabled CSS 셀렉터를 사용하여 적용할 수 있다.
+
+
+import React from 'react';
+import styled, { css } from 'styled-components';
+import palette from '../../lib/styles/palette';
+import { Link } from "react-router-dom";
+
+const buttonStyle = css`
+    ...
+
+    &:disabled {
+        background: ${palette.gray[3]};
+        color: ${palette.gray[5]};
+        cursor: not-allowed;
+    }
+`;
+
+
+버튼 스타일을 수정한 후에는 Pagination 컴포넌트를 위한 컨테이너인 PaginationContainer 컴포넌트를 만들자.
+
+
+import React from 'react';
+import Pagination from '../../components/posts/Pagination';
+import { useSelector } from "react-redux";
+import { withRouter } from "react-router-dom";
+import qs from 'qs';
+
+const PaginationContainer = ({ location, match }) => {
+    const { lastPage, posts, loading } = useSelector(({ posts, loading }) => ({
+        lastPage: posts.lastPage,
+        posts: posts.posts,
+        loading: loading['posts/LIST_POSTS'],
+    }));
+
+    // 포스트 데이터가 없거나 로딩 중이면 아무것도 보여 주지 않음
+    if(!posts || loading) return null;
+    const { username } = match.params;
+
+    // page가 없으면 1을 기본값으로 사용
+    const { tag, page = 1 } = qs.parse(location.search, {
+        ignoreQueryPrefix: true,
+    });
+
+    return (
+        <Pagination
+            tag={tag}
+            username={username}
+            page={parseInt(page, 10)}
+            lastPage={lastPage}
+            />
+    );
+};
+
+export default withRouter(PaginationContainer);
+
+
+다음으로 이 컨테이너 컴포넌트를 PostListPage 에서 렌더링해 주면 페이지네이션 기능의 구현이 모두 끝난다.
+
+
+import React from 'react';
+import HeaderContainer from '../containers/common/HeaderContainer';
+import PostListContainer from '../containers/posts/PostListContainer';
+import PaginationContainer from '../containers/posts/PaginationContainer';
+
+const PostListPage = () => {
+    return (
+        <>
+            <HeaderContainer />
+            <PostListContainer />
+            <PaginationContainer />
+        </>
+    );
+};
+
+export default PostListPage;
+
+
+하단에 페이지네이션 UI가 나타나는 지 확인해보자.
+첫 번째 페이지일 때는 이전 버튼이 비활성화되고, 마지막 페이지일 때는 다음 버튼이 비활성화 된다.
+계정명이나 태그를 클릭하여 포스트 쿼리 시스템도 잘 작동하는지 확인해보자.

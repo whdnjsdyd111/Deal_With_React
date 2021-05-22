@@ -1,0 +1,173 @@
+            14.4 뉴스 뷰어 UI 만들기
+
+styled-components 를 사용하여 뉴스 정보를 보여 줄 컴포넌트를 만들어 보자.
+우선 styled-components를 설치해 주자.
+
+
+$ yarn add styled-components
+
+
+그리고 src 디렉터리 안에 components 디렉터리를 생성한 뒤, 그 안에 NewsItem.js 와 NewsList.js 파일을 생성하자.
+NewsItem 은 각 뉴스 정보를 보여주는 컴포넌트이고, NewsList는 API를 요청하고 뉴스 데이터가 들어 있는 배열을 컴포넌트 배열로 변환하여
+렌더링해 주는 컴포넌트이다.
+
+
+        14.4.1 NewsItem 만들기
+
+먼저 NewsItem 컴포넌트 코드를 작성해 보자. 그 전에 각 뉴스 데이터에는 어떤 필드가 있는지 확인한다.
+
+
+{
+  "status": "ok",
+  "totalResults": 34,
+  "articles": [
+    {
+      "source": {
+        "id": null,
+        "name": "Sedaily.com"
+      },
+      "author": "김경림",
+      "title": "모더나 백신 승인에도 짧은 트윗만…트럼프는 어디로? - 서울경제 - 서울경제신문",
+      "description": "도널드 트럼프 미국 대통령./AP연합뉴스18일(현지시간) 마이크 펜스 미국 부통령을 비롯, 낸시 펠로시 하원의장, 미치 매코널 공화당 상원 원내대표 등 의회 주요 고위 인사들이 잇따라 신종 코로나바이러스 감염증(..",
+      "url": "https://www.sedaily.com/NewsVIew/1ZBQT5LR9O",
+      "urlToImage": "https://newsimg.sedaily.com/2020/12/19/1ZBQT5LR9O_1.jpg",
+      "publishedAt": "2020-12-19T04:19:23Z",
+      "content": "viewer\r\n . /AP\r\n18() , , (19) . 21 . .\r\n 19 , .\r\n(FDA) 19 . . FDA . . FDA .\r\n14 , () . 10 19 .\r\n. , ./ forest03@sedaily.com\r\n, ."
+    }
+}
+
+
+위 코드는 각 뉴스 데이터가 지니고 있는 정보로 이루어진 JSON 객체이다.
+그 중에서 다음 필드를 리액트 컴포넌트에 나타내게 한다.
+
+
+    title : 제목
+    description : 내용
+    url : 링크
+    urlToImage: 뉴스 이미지
+
+
+NewsItem 컴포넌트는 articles 라는 객체를 props로 통째로 받아와서 사용한다.
+NewsItem 컴포넌트를 다음과 같이 작성해보자.
+
+
+import React from 'react';
+import styled from 'styled-components'
+
+const NewsItemBlock = styled.div`
+    display: flex;
+    .thumbnail {
+        margin-right: 1rem;
+        img {
+            display: block;
+            width: 160px;
+            height: 160px;
+            object-fit: cover;
+        }
+    }
+    .contents {
+        h2 {
+            margin: 0;
+            a {
+                color: black;
+            }
+        }
+        p {
+            margin: 0;
+            line-height: 1.5;
+            margin-top: 0.5rem;
+            white-space: normal;
+        }
+    }
+    & + & {
+        margin-top: 3rem;
+    }
+`;
+
+const NewsItem = ({ article }) => {
+    const { title, description, url, urlToImage } = article;
+
+    return (
+        <NewsItemBlock>
+            {urlToImage && (
+                <div className="thumbnail">
+                    <a href={url} target="_blank" rel="noopener noreferrer">
+                        <img src={urlToImage} alt="thumbnail" />
+                    </a>
+                </div>
+            )}
+            <div className="contents">
+                <h2>
+                    <a href={url} target="_blank" rel="noopener noreferrer">
+                        {title}
+                    </a>
+                </h2>
+                <p>{description}</p>
+            </div>
+        </NewsItemBlock>
+    );
+};
+
+export default NewsItem;
+
+
+        14.4.2 NewsList 만들기
+
+이번에는 NewsList 컴포넌트를 만들어보자. 나중에 이 컴포넌트에서 API를 요청하게 될텐데,
+지금은 아직 데이터를 불러오지 않고 있으니 sampleArticle 이라는 객체에 미리 예시 데이터를 넣고 각 컴포넌트에 전달하여
+가짜 내용이 보이게 하자.
+
+
+import React from 'react';
+import styled from 'styled-components';
+import NewsItem from './NewsItem';
+
+const NewsListBlock = styled.div`
+    box-sizing: border-box;
+    padding-bottom: 3rem;
+    width: 768px;
+    margin: 0 auto;
+    margin-top: 2rem;
+    @media screen and (max-width: 768px) {
+        width: 100%;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+`;
+
+const sampleArticle = {
+    title: '제목',
+    description: '내용',
+    url: 'https://google.com',
+    urlToImage: 'https://via.placeholder.com/160',
+};
+
+const NewsList = () => {
+    return (
+        <NewsListBlock>
+            <NewsItem article={sampleArticle} />
+            <NewsItem article={sampleArticle} />
+            <NewsItem article={sampleArticle} />
+            <NewsItem article={sampleArticle} />
+            <NewsItem article={sampleArticle} />
+            <NewsItem article={sampleArticle} />
+        </NewsListBlock>
+    );
+};
+
+export default NewsList;
+
+
+다 만든 뒤에는 이 컴포넌트를 App 컴포넌트에서 보여주자. 
+App 컴포넌트에 기존에 작성한 코드는 모두 지우고 NewsList 만 렌더링 해보자.
+
+
+import React from 'react';
+import NewsList from './components/NewsList'
+
+const App = () => {
+  return <NewsList />;
+};
+
+
+export default App;

@@ -1,0 +1,109 @@
+            17.4 리액트 애플리케이션에 리덕스 적용하기
+
+이제 드디어 리액트 애플리케이션에 리덕스를 적용할 차례이다. 스토어를 만들고 리액트 애플리케이션에 리덕스를
+적용하는 작업은 src 디렉터리의 index.js 에서 이루어진다.
+
+        17.4.1 스토어 만들기
+    
+가장 먼저 스토어를 생성한다.
+
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import { createStore } from "redux";
+import rootReducer from './modules';
+
+const store = createStore(rootReducer);
+
+ReactDOM.render(<App />, document.getElementById('root'));
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+
+
+        17.4.2 Provider 컴포넌트를 사용하여 프로젝트에 리덕스 적용하기
+
+리액트 컴포넌트에서 스토어를 사용할 수 있도록 App 컴포넌트를 react-redux에서 제공하는
+Provider 컴포넌트로 감싸준다. 이 컴포넌트를 사용할 때는 store를 props로 전달해 주어야 한다.
+
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import { createStore } from "redux";
+import rootReducer from './modules';
+import { Provider } from "react-redux";
+
+const store = createStore(rootReducer);
+
+ReactDOM.render(
+  <Provider store={store}>
+    <App />
+  </Provider>, 
+  document.getElementById('root')
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+
+
+        17.4.3 Redux DevTools 의 설치 및 적용
+
+Redux DevTools는 리덕스 개발자 도구이며, 크롬 확장 프로그램으로 설치하여 사용할 수 있다.
+크롬 웹 스토어에서 Redux DevTools를 검색하여 설치해주자.
+
+설치하고 나면 리덕스 스토어를 만드는 과정에서 다음과 같이 적용해 줄 수 있다.
+
+
+const store = createStore(
+    rootReducer, /* preloadedState, */
+    window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+);
+
+
+하지만 패키지를 설치하여 적용하면 코드가 훨씬 깔끔해진다. 우리는 패키지를 설치하는 형태로 적용해본다.
+(패키지를 설치하더라도 크롬 확장 프로그램은 설치해야함)
+우선 redux-devtools-extension 을 yarn 을 사용하여 설치해주자.
+
+
+$ yarn add redux-devtools-extension
+
+
+그리고 다음과 같이 적용해 주면 된다.
+
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import { createStore } from "redux";
+import rootReducer from './modules';
+import { Provider } from "react-redux";
+import { composeWithDevTools } from "redux-devtools-extension";
+
+const store = createStore(rootReducer, composeWithDevTools());
+
+ReactDOM.render(
+  <Provider store={store}>
+    <App />
+  </Provider>, 
+  document.getElementById('root')
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+
+
+이제 브라우저에서 크롬 개발자 도구를 실행한 후 Redux 탭을 열어 확인해보자.

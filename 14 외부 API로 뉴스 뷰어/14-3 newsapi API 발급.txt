@@ -1,0 +1,55 @@
+            14.3 newsapi API 키를 발급받기
+
+이번 프로젝트에선 newsapi에서 제공하는 API를 사용하여 최신 뉴스를 불러온 후 보여줄 것이다.
+이를 수행하기 위해서는 사전에 newsapi에서 API키를 발급받아야 한다.
+API 키는 https://newsapi.org/register 에 가입하면 발급받을 수 있다.
+
+발급받은 API 키는 추후 API를 요청할 때 API 주소의 쿼리 파라미터로 넣어서 사용하면 된다.
+이제 우리가 사용할 API에 대해 알아보자.
+https://newsapi.org/s/south-korea-news-api 링크에 들어가면 한국 뉴스를 가져오는 API에 대한 설명서가 있다.
+
+사용할 API 주소는 두 가지 형태이다.
+
+
+    1. 전체 뉴스 불러오기
+
+    GET https://newsapi.org/v2/top-headlines?country=kr&apiKey=08d076dd85844f5d8cf5ce3061ebdc95
+
+    2. 특정 카테고리 뉴스 불러오기
+
+    GET https://newsapi.org/v2/top-headlines?country=kr&category=business&apiKey=08d076dd85844f5d8cf5ce3061ebdc95
+
+
+여기서 카테고리는 business, entertainment, health, science, sports, technology 중 골라서 사용할 수 있다.
+카테고리를 생략하면 모든 카테고리의 뉴스를 불러온다. apiKey 값에는 발급받은 API 키를 입력하면 된다.
+
+이제 기존에 리액트 프로젝트에서 사용한 jsonplaceholder 가짜 API를 전체 뉴스를 불러오는 API로 대체하자.
+
+
+import React, { useState } from 'react';
+import axios from 'axios';
+
+const App = () => {
+  const [data, setData] = useState(null);
+  const onClick = async () => {
+    try {
+      const response = await axios.get(
+        'https://newsapi.org/v2/top-headlines?country=kr&apiKey=08d076dd85844f5d8cf5ce3061ebdc95'
+      );
+      setData(response.data);
+    } catch(e) {
+      console.log(e);
+    }
+  };
+  return (
+    <div>
+      <div>
+        <button onClick={onClick}>불러오기</button>
+      </div>
+      {data && <textarea rows={7} value={JSON.stringify(data, null, 2)} readOnly={true} />}
+    </div>
+  );
+};
+
+
+export default App;

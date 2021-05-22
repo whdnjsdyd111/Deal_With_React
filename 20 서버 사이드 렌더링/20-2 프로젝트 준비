@@ -1,0 +1,155 @@
+            20.2 프로젝트 준비하기
+
+서버 사이드 렌더링을 진행하기 전에 리액트 라우터를 사용하여 라우팅하는 간단한 프로젝트를 만들어보자.
+조금 전에 만들었던 ssr-recipe 프로젝트 디렉터리에 react-router-dom 을 설치 하자.
+
+
+$ yarn add react-router-dom
+
+
+        20.2.1 컴포넌트 만들기
+
+간단한 컴포넌트를 세 개 작성하자. components 디렉터리를 생성하여 그 안에 다음 파일들을
+하나하나 순서대로 작성하면 된다.
+
+
+import React from 'react';
+import './Red.css';
+
+const Red = () => {
+    return <div className="Red">Red</div>
+}
+
+export default Red;
+
+
+.Red {
+  background: red;
+  font-size: 1.5rem;
+  color: white;
+  width: 128px;
+  height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+import React from 'react';
+import './Blue.css';
+
+const Blue = () => {
+    return <div className="Blue">Blue</div>
+};
+
+export default Blue;
+
+
+.Blue {
+  background: blue;
+  font-size: 1.5rem;
+  color: white;
+  width: 128px;
+  height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+import React from 'react';
+import { Link } from "react-router-dom";
+
+const Menu = () => {
+    return (
+        <ul>
+            <li>
+                <Link to="/red">Red</Link>
+            </li>
+            <li>
+                <Link to="/blue">Blue</Link>
+            </li>
+        </ul>
+    );
+};
+
+export default Menu;
+
+
+단순하게 빨간색, 파란색 박스를 보여 주는 컴포넌트와 각 링크로 이동할 수 있게 해 주는 메뉴 컴포넌트를 만들었다.
+이 컴포넌트들을 리액트 앱에서 사용해 본다.
+
+
+        20.2.2 페이지 컴포넌트 만들기
+
+이번에는 각 라우트를 위한 페이지 컴포넌트들을 만들겠다. 이 컴포넌트들은 pages 디렉터리에 작성해 준다.
+
+
+import React from 'react';
+import Red from '../components/Red';
+
+const RedPage = () => {
+    return <Red />;
+}
+
+export default RedPage;
+
+
+import React from 'react';
+import Blue from '../components/Blue';
+
+const BluePage = () => {
+    return <Blue />;
+}
+
+export default BluePage;
+
+
+페이지 컴포넌트도 다 만들었다. 이제 App 컴포넌트에서 라우트 설정을 해 보자.
+
+
+import React from 'react';
+import { Route } from "react-router-dom";
+import Menu from './components/Menu';
+import RedPage from './pages/RedPage';
+import BluePage from './pages/BluePage';
+
+const App = () => {
+  return (
+    <div>
+      <Menu />
+      <hr />
+      <Route path="/red" component={RedPage} />
+      <Route path="/blue" component={BluePage} />
+    </div>
+  );
+};
+
+export default App;
+
+
+다음으로 BrowserRouter를 사용하여 프로젝트에 리액트 라우터를 적용하자.
+
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import { BrowserRouter } from "react-router-dom";
+
+ReactDOM.render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>,
+  document.getElementById('root')
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+
+
+브라우저로 페이지를 열어서 Menu 컴포넌트에 있는 링크를 눌러보자.
+빨간색, 파란색 컴포넌트가 잘 나타나는지 보자.

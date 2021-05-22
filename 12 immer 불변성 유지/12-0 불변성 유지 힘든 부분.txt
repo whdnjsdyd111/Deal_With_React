@@ -1,0 +1,58 @@
+11장에서는 컴포넌트 업데이트 성능을 어떻게 최적화해야 하는지, 불변성을 유지하면서 상태를 업데이트하는 것이
+왜 중요한지 간단히 배웠다. 전개 연산자와 배열 내장 함수를 사용하면 간단하게 배열 혹은 객체를 복사하고 새로운 값을 덮어 쓸 수 있다.
+하지만 객체의 구조가 엄청나게 깊어지면 불변성을 유지하며 업데이트하는 것이 매우 힘들어 진다.
+
+
+const object = {
+    somewhere: {
+        deep: {
+            inside: 3,
+            array: [1, 2, 3, 4]
+        },
+        bar: 2
+    },
+    foo: 1
+};
+
+
+// somehere.deep.inside 값을 4로 바꾸기
+let nextObject = {
+    ...object,
+    somewhere: {
+        ...object.somewhere,
+        deep: {
+            ...object.somewhere.deep,
+            inside: 4
+        }
+    }
+};
+
+
+// somehere.deep.array 에 5 추가하기
+let nextObject = {
+    ...object,
+    somewhere: {
+        ...object.somewhere,
+        deep: {
+            ...object.somewhere.deep,
+            array: object.somewhere.deep.array.concat(5)
+        }
+    }
+};
+
+
+값 하나를 업데이트하기 위해 코드를 열 줄 정도 작성해야 한다.
+이렇게 전개 연산자를 자주 사용하는 것은 기존에 거지고 있던 다른 값은 유지하면서 값을 새로 지정하기 위해서다.
+
+간혹 실제 프로젝트에서도 이렇게 복잡한 상태를 다룰 때가 있는데, 그럴 때마다 전개 연산자를 여러 번 사용하는 것은
+꽤 번거로운 일이다. 가독성 또한 좋지 않다.
+
+이러한 상황에 immer라는 라이브러리를 사용하면, 구조가 복잡한 객체도 매우 쉽고 짧은 코드를 사용하여
+불변성을 유지하면서 업데이트해 줄 수 있다.
+
+이번 실습은 다음과 같은 흐름으로 진행한다.
+
+
+    immer를 설치하고, 사용법 알아보기
+            ↓
+    immer를 사용하여 간단한 프로젝트 만들어 보기

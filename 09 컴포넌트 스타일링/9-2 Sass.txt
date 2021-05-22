@@ -1,0 +1,388 @@
+            9.2 Sass 사용하기
+
+Sass(Syntactically Awesome Style Sheets)(문법적으로 매우 멋진 스타일시트)는 CSS 전처리기로 
+복잡한 작업을 쉽게 할 수 있도록 해 주고, 스타일 코드의 재활용성을 높여줄 뿐만 아니라 코드의 가독성을 높여서
+유지 보수를 더욱 쉽게 해준다.
+
+create-react-app 구버전에는 Sass를 사용하려면 추가 작업이 필요했는데, v2 버전부터 별도의 추가 설정이 필요없다.
+
+Sass 에서는 두 가지 확장자 .scss와 .sass를 지원한다.
+Sass가 처음 나왔을 때 .sass 확장자만 지원됐으나, 나중에 요청에 의해 .scss 확장자도 지원하게 되었다.
+
+.scss의 문법과 .sass 문법은 꽤 다르다. 확인해보자.
+
+
+sass
+
+$font-stack: Helvetica, sans-serif
+$primary-color: #333
+
+body
+    font: 100% $font-stack
+    color: $primary-color
+
+
+scss
+
+$font-stack: Helvetica, sans-serif;
+$primary-color: #333;
+
+body {
+    font: 100% $font-stack;
+    color: $primary-color;
+}
+
+
+주요 차이점을 보면 .sass 확장자는 중괄호와 세미콜론을 사용하지 않는다.
+반면 scss 확장자는 기존 CSS 작성법과 크게 다르지 않다.
+
+보통 scss 문법이 더 자주 사용되므로 이 책에선 scss 확장자를 사용하여 스타일을 작성해본다.
+
+새 컴포넌트를 만들어서 Sass를 한번 사용해보자.
+우선 node-sass 라는 라이브러리를 설치해줘야 한다.
+이 라이브러리는 Sass를 CSS로 변환해준다. 프로젝트 디렉터리에서 다음 명령어를 실행하자.
+
+
+$ yarn add node-sass
+
+
+설치 완료 후 SassComponent.scss 파일을 생성하자.
+
+
+// 변수 사용하기
+$red: #fa5252;
+$orange: #fd7e14;
+$yello: #fcc419;
+$green: #40c057;
+$blue: #339af0;
+$indigo: #5c7cfa;
+$violet: #7950f2;
+// 믹스인 만들기(재사용되는 스타일 블록을 함수처럼 사용 가능)
+@mixin square($size) {
+    $calculated: 32px * $size;
+    width: $calculated;
+    height: $calculated;
+}
+
+.SassComponent {
+    display: flex;
+    .box {
+        // 일반 CSS 에서는 .SassComponent .box 와 마찬가지
+        background: red;
+        cursor: pointer;
+        transition: all 0.3 ease-in;
+        &.red {
+            // .red 클래스가 .box와 함께 사용되었을 시
+            background: $red;
+            @include square(1);
+        }
+        &.orange {
+            background: $orange;
+            @include square(2);
+        }
+        &.yellow {
+            background: $yello;
+            @include square(3);
+        }
+        &.green {
+            background: $green;
+            @include square(4);
+        }
+        &.blue {
+            background: $blue;
+            @include square(5);
+        }
+        &.indigo {
+            background: $indigo;
+            @include square(6);
+        }
+        &.violet {
+            background: $violet;
+            @include square(7);
+        }
+        &:hover {
+            // .box에 마우스를 올렸을 때
+            background: black;
+        }
+    }
+}
+
+
+
+그리고 이 Sass 스타일시트를 사용하는 SassComponent.js 컴포넌트 파일도 src에 만들자.
+
+
+import React from 'react';
+import './SassComponent.scss';
+
+const SassComponent = () => {
+    return (
+        <div className="SassComponent">
+            <div className="box red" />
+            <div className="box orange" />
+            <div className="box yello" />
+            <div className="box green" />
+            <div className="box blue" />
+            <div className="box indigo" />
+            <div className="box violet" />
+        </div>
+    )
+}
+
+export default SassComponent;
+
+
+이제 이 컴포넌트를 App 컴포넌트에서 보여 준다.
+
+
+import React, { Component } from 'react';
+import SassComponent from './SassComponent';
+
+class App extends Component {
+  render() {
+    return (
+      <div>
+        <SassComponent />
+      </div>
+    );
+  }
+}
+
+export default App;
+
+
+작업 후 개발 서버를 재시작해야 Sass가 성공적으로 적용된다.
+
+
+        9.2.1 utils 함수 분리하기
+
+여러 파일에서 사용될 수 있는 Sass 변수 및 믹스인은 다른 파일로 따로 분리하여 작성한 뒤 
+필요한 곳에서 쉽게 불러와 사용할 수 있다.
+
+src 디렉터리 styles라는 디렉터리를 생성하고, 그 안에 utils.scss 파일을 만들자.
+그 다음에는 기존 SassComponent.scss에 작성한 변수와 믹스인을 잘라내어 이동시켜보자.
+
+
+// 변수 사용하기
+$red: #fa5252;
+$orange: #fd7e14;
+$yello: #fcc419;
+$green: #40c057;
+$blue: #339af0;
+$indigo: #5c7cfa;
+$violet: #7950f2;
+
+// 믹스인 만들기(재사용되는 스타일 블록을 함수처럼 사용 가능)
+@mixin square($size) {
+  $calculated: 32px * $size;
+  width: $calculated;
+  height: $calculated;
+}
+
+
+이제 utils.scss 파일에서 선언한 변수와 믹스인을 SassComponent.scss에서 사용해보자.
+다른 scss 파일을 불러올 때는 @import 구문을 사용한다.
+
+
+@import './styles/utils.scss';
+
+.SassComponent {
+  display: flex;
+  .box {...}
+}
+
+
+이제 utils.scss 파일을 분리하기 전의 결과와 같은지 확인해보자.
+
+
+        9.2.2 sass-loader 설정 커스터마이징
+
+이 작업은 Sass를 사용할 때 반드시 해야하는 것은 아니지만, 해두면 유용하다.
+예를 들어 SassComponent에서 utils를 불러올 때  @import './styles/utils'; 형태로 불러왔는데,
+먼역 프로젝트에 디렉터리가 많다 구조가 깊어졌다면 한참 거슬러 올라가야 한다는 단점이 있다.
+
+
+@import '../../../styles/utils';
+
+
+이 문제점은 웹팩에서 sass-loader 의 설정을 커스터마이징하여 해결할 수 있다.
+create-react-app 으로 만든 프로젝트는 프로젝트 구조의 복잡도를 낮추기 위해 세부 설정이 모두 숨겨있다.
+이를 커스터마이징하려면 프로젝트 디렉터리에서 yarn eject 명령어로 세부 설정을 밖으로 꺼내주어야 한다.
+
+create-react-app에선 기본적으로 Git 설정이 돼있어 커밋되지 않은 변화가 있으면 진행되지 않아 커밋부터 하자.
+
+
+$ git add .
+$ git commit -m'Commit before yarn eject'
+
+
+그리고 나서 yarn eject 명령어를 실행하자.
+
+
+$ yarn eject
+
+
+이제 프로젝트 디렉터리에 config 라는 디렉터리가 생성됐을 것이다.
+그 디렉터리 안에 들어있는 webpack.config.js 를 열어보자.
+
+그 파일안에 "sassRegex" 라는 키워드를 찾아보자.(컨트롤 + F)
+두 번째 탐색 결과에서 다음과 같은 코드가 나올 것이다.
+
+
+{
+    test: sassRegex,
+    exclude: sassModuleRegex,
+    use: getStyleLoaders(
+    {
+        importLoaders: 3,
+        sourceMap: isEnvProduction
+        ? shouldUseSourceMap
+        : isEnvDevelopment,
+    },
+    'sass-loader'
+    ),
+    // Don't consider CSS imports dead code even if the
+    // containing package claims to have no side effects.
+    // Remove this when webpack adds a warning or an error for this.
+    // See https://github.com/webpack/webpack/issues/6571
+    sideEffects: true,
+},
+
+
+여기서 use: 에 있는 'sass-loader' 부분을 지우고, 뒷부분에 concat을 통해 커스터마이징된 sass-load 설정을 넣어주자.
+
+
+{
+    test: sassRegex,
+    exclude: sassModuleRegex,
+    use: getStyleLoaders(
+    {
+        importLoaders: 2,
+        sourceMap: isEnvProduction && shouldUseSourceMap
+    }).concat({
+        loader: require.resolve('sass-loader'),
+        options: {
+        sassOptions: {
+            includePaths: [paths.appSrc + '/styles']
+        },
+        sourceMap: isEnvProduction && shouldUseSourceMap,
+        }
+    }),
+    // Don't consider CSS imports dead code even if the
+    // containing package claims to have no side effects.
+    // Remove this when webpack adds a warning or an error for this.
+    // See https://github.com/webpack/webpack/issues/6571
+    sideEffects: true,
+},
+
+
+설정 파일을 저장한 후, 서버를 껐다가 재시작해보자. 이제 utils.scss 파일을 불러올 때 현재 수정하고 있는
+scss 파일 경로가 어디에 위치하더라도 앞부분 상대 경로를 입력할 필요 없이 styles 디렉터리 기준 절대 경로로 불러올 수 있다.
+
+
+    노트 개발 서버가 시작되지 않을 경우
+
+yarn eject 이후 개발 서버가 제대로 시작되지 않을 경우 node_modules 디렉터리를 삭제 후,
+yarn install 명령어를 실행하고 나서 yarn start 를 해보자.
+
+
+SassComponent.scss 파일에서 import 구문을 다음과 같이 한번 수정해보자. 그리고 적용이 되는지 확인하자.
+
+
+@import 'utils.scss';
+
+
+이제부터 utils.scss를 사용하는 컴포넌트가 있다면 위 한 줄만 넣어 주면 된다.
+
+하지만 새 파일을 생성할 때마다 utils.scss를 매번 이렇게 포함시키는 것도 귀찮을 수 있을 텐데,
+이에 대한 해결 방법도 있다. 그럴 때는 sass-loader의 data 옵션을 설정하면 된다.
+data 옵션을 설정하면 Sass 파일을 불러올 때마다 코드의 맨 윗부분에 특정 코드를 포함시켜 준다.
+
+webpack.config.js 를 열어서 조금 전 수정했던 sass-loader의 옵션에 있는 data 필드를 다음과 같이 수정한다.
+
+
+{
+    test: sassRegex,
+    exclude: sassModuleRegex,
+    use: getStyleLoaders(
+    {
+        importLoaders: 2,
+        sourceMap: isEnvProduction && shouldUseSourceMap
+    }).concat({
+        loader: require.resolve('sass-loader'),
+        options: {
+        sassOptions: {
+            includePaths: [paths.appSrc + '/styles']
+        },
+        sourceMap: isEnvProduction && shouldUseSourceMap,
+        prependData: `@import 'utils';`
+        }
+    }),
+    // Don't consider CSS imports dead code even if the
+    // containing package claims to have no side effects.
+    // Remove this when webpack adds a warning or an error for this.
+    // See https://github.com/webpack/webpack/issues/6571
+    sideEffects: true,
+},
+
+
+이렇게 작성하고 개발 서버를 재시작하고 나면 모든 scss 파일에서 utils.scss를 자동으로 불러오므로,
+Sass에서 맨 윗줄에 있는 import 구문을 지워도 정상적으로 작동될 것이다.
+
+
+        9.2.3 node_modules에서 라이브러리 불러오기
+
+Sass의 장점 중 하나는 라이브러리를 쉽게 불러와서 사용할 수 있다는 점이다.
+yarn을 통해서 설치한 라이브러리를 사용하는 가장 기본적인 방법은 다음과 같이
+상대 경로를 사용하여 node_modules 까지 들어가서 불러오는 방법이다.
+
+
+@import '../../../node_modules/library/styles';
+
+
+하지만 이런 구조는 스타일 파일이 깊숙한 디렉터리에 위치할 경우 ../ 를 많이 적어야 하니 번거롭다.
+더 쉬운 방법이 있는데, 바로 물결 문자(~)를 사용하는 방법이다.
+
+
+@import '~library/styles';
+
+
+물결 문자를 사용하면 자동으로 node_modules에서 라이브러리 디렉터리를 탐지하여 스타일을 불러올 수 있다.
+
+연습 삼아 유용한 Sass 라이브러리 두 가지를 설치하고 사용해보자.
+반응형 디자인을 쉽게 만들어주는 include-media(https://include-media.com/)와
+매우 편리한 색상 팔레트인 open-color(https://www.npmjs.com/package/open-color)를 yarn 명령어를 사용해 설치하자.
+
+
+$ yarn add open-color include-media
+
+
+그 다음 utils.scss 파일을 열고 물결 표시를 사용하여 라이브러리를 불러오자.
+다음 두 줄을 코드 상단에 넣어주면 된다.
+
+
+@import '~include-media/dist/include-media';
+@import '~open-color/open-color';
+
+...
+
+
+Sass 라이브러리를 불러올 때는 node_modules 내부 라이브러리 경로 안에 들어있는 scss 파일을 불러와야 한다.
+보통 scss 파일 경로가 어디에 위치하고 있는지를 라이브러리의 공식 메뉴얼에서 알려 주지 않을 때가 많으니,
+직접 경로로 들어가서 확인해보자.
+
+이제 방금 불러온 include-media와 open-color를 SassComponent.scss에서 사용해보자.
+해당 파일을 다음과 같이 수정한다.
+
+
+.SassComponent {
+  display: flex;
+  background: $oc-gray-2;
+  @include media("<768px") {
+    background: $oc-gray-9;
+  }...
+}
+
+
+이 코드는 SassComponent의 배경색을 open-colors 팔레트 라이브러리에서 불러온 후 설정하고, 화면 가로 크기가 768px 미만 되면
+배경색을 어둡게 바꿔준다. 코드를 저장하고 확인해보자.

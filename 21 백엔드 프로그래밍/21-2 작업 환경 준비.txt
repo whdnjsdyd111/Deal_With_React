@@ -1,0 +1,185 @@
+            21.2 작업 환경 준비
+
+        21.2.1 Node 설치 확인
+
+Node.js 개발을 하기 위해서는 당연히 Node.js 런타임이 설치되어 있어야 한다.
+우리는 이미 1장에서 설치했다. Node.js가 설치되어 있는지 터미널에서 다시 한 번 확인해 보자.
+
+
+$ node --version
+v12.20.0
+
+
+        21.2.2 프로젝트 생성
+
+이번에 만들 백엔드 프로젝트는 이 책에서 다루는 마지막 프로젝트인 블로그 서비스와 연동할 서버이다.
+blog 디렉터리를 만들고, 그 내부에 blog-backend 디렉터리를 만들자.
+해당 디렉터리에서 yarn init -y 명령어를 실행하여 패키지 정보를 생성한다.
+
+
+$ mkdir blog
+$ cd blog
+$ mkdir blog-backend
+$ cd blog-backend
+$ yarn init -y
+yarn init v1.22.5
+warning The yes flag has been set. This will automatically answer yes to all questions, which may have security implications.
+success Saved package.json
+Done in 0.22s.
+
+
+이 작업을 하고 나면 디렉터리에 package.json 파일이 생성된다.
+다음 명령어를 실행하여 해당 파일이 잘 만들어 졌느지 확인해본다.
+
+
+$ cat package.json
+{
+  "name": "blog-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT"
+}
+
+
+이제 필요한 Koa 웹 프레임워크를 설치해 본다.
+
+
+$ yarn add koa
+
+
+설치 한 뒤 다시 한번 package.json 을 열어 보면, 다음과 같이 koa가 dependencies에 추가되어 있을 것이다.
+
+
+{
+  "name": "blog-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "koa": "^2.13.0"
+  }
+}
+
+
+        21.2.3 ESLint와 Prettier 설정
+
+서버 파일을 작성하기 전에 ESLint와 Prettier를 프로젝트에 적용한다.
+자바스크립트 문법을 검사하고 깔끔한 코드를 작성하기 위함이다.
+
+두 기능을 VS Code 에서 사용하려면 VS Code 마켓플레이스에서 Prettier-Code formatter와 ESLint 확장 프로그램을
+설치해 둔 상태여야 한다. 2장에서 그 설치 과정을 소개했는데 아직 설치하지 않았다면 2장의 내용을 참고하여 설치하길 바란다.
+
+먼저 ESLint를 설치한다.
+
+
+$ yarn add --dev eslint
+$ yarn run eslint --init
+
+√ How would you like to use ESLint? · problems
+√ What type of modules does your project use? · commonjs
+√ Which framework does your project use? · none
+√ Does your project use TypeScript? · No
+√ Where does your code run? · node
+√ What format do you want your config file to be in? · JSON
+Successfully created .eslintrc.json file in C:\Users\PC\Documents\Visual Studio Code\Deal_With_React\blog\blog-backend
+
+
+    노트
+
+yarn add 명령어를 사용할 때 --dev 는 개발용 의존 모듈로 설치한다는 의미이다.
+이렇게 설치하면 package.json에서 devDependencies 쪽에 모듈의 버전 정보가 입력된다.
+
+
+이렇게 하고 나면 프로젝트 디렉터리에 .eslintrc.json 파일이 생성된다.
+
+
+{
+    "env": {
+        "commonjs": true,
+        "es2021": true,
+        "node": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 12
+    },
+    "rules": {
+    }
+}
+
+
+이제 Prettier를 설정한다. blog-backend 디렉터리에 다음 파일을 만든다.
+
+
+{
+    "singleQuote": true,
+    "semi": true,
+    "useTabs": false,
+    "tabWidth": 2,
+    "trailingComma": "all",
+    "printWidth": 80
+}
+
+
+다음으로 Prettier에서 관리하는 코드 스타일은 ESLint 에서 관리하지 않도록 eslint-config-prettier를 설치하여 적용한다.
+
+
+$ yarn add eslint-config-prettier
+
+
+설치하고 .eslintrc.json 파일을 수정한다.
+
+
+{
+    "env": {
+        "commonjs": true,
+        "es2021": true,
+        "node": true
+    },
+    "extends": ["eslint:recommended", "prettier"],
+    "parserOptions": {
+        "ecmaVersion": 12
+    },
+    "rules": {
+    }
+}
+
+
+이제 두 도구가 제대로 작동하는지 확인해보자.
+blog-backend 디렉터리에 src 디렉터리를 생성하고, 그 안에 index.js 파일을 만든다.
+
+
+const hello = 'hello';
+
+
+const로 값을 선언하고 사용하지 않으면, ESLint 기본 설정은 이를 에러로 간주한다.
+위 코드를 입력했을 때 오류가 뜨는지 확인해보자.
+오류가 뜬다면 ESLint 문법은 더 나은 코드를 위해 이를 오류 취급한다.
+이런 규칙을 끌 수도 있는데, .eslintrc.json 에서 해당 오류를 경고로 바꾸거나 비활성화할 수 있다.
+
+.eslintrc.json 을 다음과 같이 수정해보자.
+
+
+{
+    "env": {
+        "commonjs": true,
+        "es2021": true,
+        "node": true
+    },
+    "extends": ["eslint:recommended", "prettier"],
+    "parserOptions": {
+        "ecmaVersion": 12
+    },
+    "rules": {
+        "no-unused-vars": "warn",
+        "no-console": "off"
+    }
+}
+
+
+이렇게 수정하면 경고만 뜰것이다.
+그리고 on-console 값에는 "off" 를 설정해 주었다. ESLint 기본 설정에서는 console.log를 사용하는 것을 지양한다.
+console.log 를 사용할 것이므로 규칙을 비활성화 하였다.
+또한, 저장할 때 Prettier를 통해 쌍따옴표(")가 홀따옴표(')로 바뀌었는지도 확인한다.
+저장할 때 자동으로 코드를 정리하는 설정이 활성화하지 않았다면 F1 을 누르고
+format이라고 입력하여 문서 서식을 실행해보자.

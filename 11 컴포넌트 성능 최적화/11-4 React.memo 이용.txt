@@ -1,0 +1,25 @@
+            11.4 React.memo를 사용하여 컴포넌트 성능 최적화
+
+컴포넌트의 리렌더링을 방지할 때는 7장에서 나온 shouldComponentUpdate 라는 라이프사이클을 사용하면 된다.
+그런데 함수형 컴포넌트에서는 라이프사이클 메소드를 사용할 수 없다. 그 대신 React.memo라는 함수를 사용한다.
+컴포넌트의 props가 바뀌지 않았다면, 리렌더링하지 않도록 설정하여 함수형 컴포넌트의 리렌더링 성능을 최적화해 줄 수 있다.
+
+React.memo의 사용법은 매우 간단하다. 컴포넌트를 만들고 나서 감싸 주기만 하면 된다.
+TodoListItem 컴포넌트에 다음과 같이 React.memo를 적용해보자.
+
+
+import React from 'react';
+import {
+    MdCheckBoxOutlineBlank,
+    MdCheckBox,
+    MdRemoveCircleOutline,
+} from 'react-icons/md';
+import './TodoListItem.scss';
+import cn from 'classnames';
+
+const TodoListItem = ({ todo, onRemove, onToggle }) => {...};
+
+export default React.memo(TodoListItem);
+
+
+정말 간단하다. 이제 TodoListItem 컴포넌트는 todo, onRemove, onToggle이 바뀌지 않으면 리렌더링을 하지 않는다.

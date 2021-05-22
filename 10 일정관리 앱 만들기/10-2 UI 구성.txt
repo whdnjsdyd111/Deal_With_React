@@ -1,0 +1,319 @@
+            10.2 UI 구성하기
+
+앞으로 만들 컴포넌트를 하나하나 용도별로 소개한다.
+
+
+    1. TodoTemplate : 화면 가운에 정렬시켜 주며, 앱 타이틀(일정 관리)을 보여준다.
+        cildren 으로 내부 JSX를 props로 받아 와서 렌더링 해준다.
+
+    2. TodoInsert : 새로운 항목을 입력하고 추가할 수 있는 컴포넌트다.
+        state를 통해 인풋의 상태를 관리한다.
+
+    3. TodoListItem : 각 할 일 항목에 대한 정보를 보여 주는 컴포넌트다.
+        todo 객체를 props로 받아 와서 상태에 따라 다른 스타일의 UI를 보여준다.
+
+    4. TodoList : toods 배열을 props로 받아온 후, 이를 배열 내장 함수 map을 사용해서 여러 개의 
+        TodoListItem 컴포넌트를 반환하여 보여준다.
+
+
+이렇게 총 네 개의 컴포넌트를 만든다. 이 컴포넌트들은 src 디렉터리에 components 라는 디렉터리를 생성하여
+그 안에 저장한다. 컴포넌트 파일을 components 디렉터리에 넣는 이유는 기능이나 구조상 필요하기 때문이 아니라
+자주 사용되는 관습이기 때문이다.
+지금 단계에서는 컴포넌트의 기능에 대해 신경쓰기보다는 모양새를 갖추는 데 집중하자.
+
+
+        10.2.1 TodoTemplate 만들기
+
+src 디렉터리에 components 디렉터리를 생성한 뒤 그 안에 TodoTemplate.js와 TodoTemplate.scss 파일을 생성한다.
+그 다음에는 자바스크립트 파일을 다음과 같이 작성하자.
+
+
+import React from 'react';
+import './TodoTemplate.scss';
+
+const TodoTemplate = ({ children }) => {
+    return (
+        <div className="TodoTemplate">
+            <div className="app-title">일정 관리</div>
+            <div className="content">{children}</div>
+        </div>
+    );
+};
+
+export default TodoTemplate;
+
+
+다음으로 이 컴포넌트를 App.js에서 불러와 렌더링하자.
+
+
+import React from 'react';
+import TodoTemplate from './components/TodoTemplate';
+
+const App = () => {
+  return <TodoTemplate>Todo App을 만들자</TodoTemplate>;
+};
+
+export default App;
+
+
+이 컴포넌트를 작성하는 과정에서 다음과 같이 상단에 import 를 넣지 않고 바로 컴포넌트를 사용하려고 하면,
+VS Code 에디터에서 자동 완성 기능이 나타날 것이다.
+
+자동 완성을 누르면 자동으로 import 되면서 컴포넌트 이름이 입력된다. 근데 TodoTemplate.js 컴포넌트가 CS Code 다른 탭에
+열려 있지 않으면 자동 완성이 작동하지 않는다. 닫혀 있는 파일에도 자동 완성이 제대로 작동하려면 프로젝트 최상위 디렉터리에
+jsconfig.json 파일을 만들어주면 된다.
+
+
+{
+    "compilerOptions": {
+        "target": "es6"
+    }
+}
+
+
+이제 자동 완성 인텔리센스를 열 수 있다.
+
+이제 스타일을 작성할 차례인데, CSS가 익숙하지 않다면, 가급적 브라우저를 한쪽 화면에 띄어 놓고 각 스타일 코드가 실제로 어떤
+변화를 주는지 확인하며 작성하는 것을 추천한다.
+
+이 책에서는 레이아웃을 할 때 flex라는 display 속성을 자주 사용할 것이다.
+코드에 있는 주석을 읽으며 작성해 보면 각 코드가 어떤 역할을 하는지 추분히 학습할 수 있지만, flex를 더 자세히 알고 싶다면
+Flexbox Froggy 라는 사이트를 추천한다. flex를 학습하는데 큰 도움이 된다.
+
+
+        10.2.2 TodoInsert 만들기
+
+이번에는 TodoInsert를 만들 차례이다.
+components 디렉터리에 TodoInsert.js 파일과 TodoInsert.scss 파일을 만들자.
+
+
+import React from 'react';
+import { MdAdd } from 'react-icons/md';
+import './TodoInsert.scss';
+
+const TodoInsert = () => {
+    return (
+        <form className="TodoInsert">
+            <input placeholder="할 일을 입력하세요." />
+            <button type="submit">
+                <MdAdd />
+            </button>
+        </form>
+    );
+};
+
+export default TodoInsert;
+
+
+여기서 첨으로 react-icons의 아이콘을 사용했다.
+https://react-icons.github.io/react-icons/ 페이지에 들어가면 많은 아이콘과 이름이 함께 나타난다.
+
+여기서 사용하고 싶은 아이콘을 고르고, import 구문을 사용하여 불러온 후 컴포넌트처럼 사용하면 된다.
+
+
+import { 아이콘 이름 } from 'react-icons/md';
+
+
+이제 이 컴포넌트를 App에서 불러와 렌더링 해보자.
+
+
+import React from 'react';
+import TodoTemplate from './components/TodoTemplate';
+import TodoInsert from './components/TodoInsert';
+
+const App = () => {
+  return (
+    <TodoTemplate>
+      <TodoInsert />
+    </TodoTemplate>
+  );
+};
+
+export default App;
+
+
+이제 이 컴포넌트를 스타일링 해보자.
+
+
+.TodoInsert {
+    display: flex;
+    background: #495057;
+    input {
+        // 기본 스타일 초기화
+        background: none;
+        outline: none;
+        border: none;
+        padding: 0.5rem;
+        font-size: 1.125rem;
+        line-height: 1.5;
+        color: white;
+        &::placeholder {
+            color: #dee2e6;
+        }
+        // 버튼을 제외한 영역을 모두 차지하기
+        flex: 1;
+    }
+    button {
+        // 기본 스타일 초기화
+        background: none;
+        outline: none;
+        border: none;
+        background: #868e96;
+        color: white;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        transition: 0.1s background ease-in;
+        &:hover {
+            background: #adb5bd;
+        }
+    }
+}
+
+
+스타일링 하니 TodoInsert 컴포넌트가 보기 좋아졌다.
+마우스를 + 버튼에 올리면 버튼의 배경색도 바뀐다.
+
+
+        10.2.3 TodoListItem과 TodoList 만들기
+
+이제 일정 관리 항목이 보일 TodoListItem과 TodoList를 만들 차례다.
+먼저 TodoListItem 컴포넌트부터 만들어보자. components 디렉터리에 TodoListItem.js와 TodoListItem.scss를 생성하자.
+
+
+import React from 'react';
+import {
+    MdCheckBoxOutlineBlank,
+    MdCheckBox,
+    MdRemoveCircleOutline,
+} from 'react-icons/md';
+import './TodoListItem.scss';
+
+const TodoListItem = () => {
+    return (
+        <div className="TodoListItem">
+            <div className="checkbox">
+                <MdCheckBoxOutlineBlank />
+                <div className="text">할 일</div>
+            </div>
+            <div className="remove">
+                <MdRemoveCircleOutline />
+            </div>
+        </div>
+    );
+};
+
+export default TodoListItem;
+
+
+여기서는 다양한 아이콘을 불러와 사용했다. 아직 MdCheckBox 아이콘 컴포넌트는 사용하지 않은 상태이다.
+이 아이콘은 나중에 할 일 완료되었을 때 체크된 상태를 보여주기 위해 사용할 아이콘이다.
+
+이 컴포넌트를 다 작성했으면 TodoList.js 파일과 TodoList.scss 파일을 생성하고, TodoList.js 컴포넌트를
+다음과 같이 작성하자.
+
+
+import React from 'react';
+import TodoListItem from './TodoListItem';
+import './TodoList.scss';
+
+const TodoList = () => {
+    return (
+        <div className="TodoList">
+            <TodoListItem />
+            <TodoListItem />
+            <TodoListItem />
+        </div>
+    );
+};
+
+export default TodoList;
+
+
+지금은 이 컴포넌트에 TodoListItem을 불러와서 별도의 props 전달 없이 그대로 여러 번 보여주고 있다.
+나중에는 여기에 기능을 추가하고 다양한 데이터를 전달할 것이다.
+
+컴포넌트를 다 작성했다면 App에서 렌더링해주자.
+
+
+import React from 'react';
+import TodoTemplate from './components/TodoTemplate';
+import TodoInsert from './components/TodoInsert';
+import TodoList from './components/TodoList';
+
+const App = () => {
+  return (
+    <TodoTemplate>
+      <TodoInsert />
+      <TodoList />
+    </TodoTemplate>
+  );
+};
+
+export default App;
+
+
+여기서 이제 스타일링을 해주자.
+스타일링 첫 번째 컴포넌트는 TodoList 인데, 필요한 스타일이 그다지 많지 않다.
+
+
+.TodoList {
+  min-height: 320px;
+  max-height: 513px;
+  overflow: auto;
+}
+
+
+그 다음에는 TodoListItem을 스타일링해주자.
+
+
+.TodoListItem {
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  &:nth-child(even) {
+    background: #f8f9fa;
+  }
+  .checkbox {
+    cursor: pointer;
+    flex: 1; // 차지할 수 있는 영역 모두 차지
+    display: flex;
+    align-items: center;
+    svg {
+      // 아이콘
+      font-size: 1.5rem;
+    }
+    .text {
+      margin-left: 0.5rem;
+      flex: 1; // 차지할 수 있는 영역 모두 차지
+    }
+    // 체크됐을 때 보여 줄 스타일
+    &.checked {
+      svg {
+        color: #22b8cf;
+      }
+      .text {
+        color: #adb5bd;
+        text-decoration: line-through;
+      }
+    }
+  }
+  .remove {
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    color: #ff6b6b;
+    cursor: pointer;
+    &:hover {
+      color: #ff8787;
+    }
+  }
+
+  // 엘리먼트 사이사이에 테두리 넣기
+  & + & {
+    border-top: 1px solid #dee2e6;
+  }
+}

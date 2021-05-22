@@ -1,0 +1,282 @@
+            9/3 CSS Module
+
+CSS Module은 CSS를 불러와서 사용할 때 클래스 이름을 고유 값, 즉 [파일 이름]_[클래스 이름]_[해시값] 형태로
+자동으로 만들어서 컴포넌트 스타일 클래스 이름이 중첩되는 현상을 방지해 주는 기술이다.
+CSS Module을 사용하기 위해 구버전(v1)의 create-react-app 에서는 웹팩에서 css-loader 설정을 별도로 했어야 했지만,
+v2 버전 이상부터는 따로 설정할 필요 없이 .module.css 확장자로 파일을 저장하기만 하면 CSS Module이 적용된다.
+
+CSSModule.module.css 라는 파일을 src 디렉터리에 생성하여 다음과 같이 한번 작성해보자.
+
+
+/* 자동으로 고유해질 것이므로 흔히 사용되는 단어를 클래스 이름으로 마음대로 사용 가능 */
+
+.wrapper {
+  background: black;
+  padding: 1rem;
+  color: white;
+  font-size: 2rem;
+}
+
+/* 글로벌 CSS를 작성하고 싶다면 */
+
+:global .something {
+  font-weight: 800;
+  color: aqua;
+}
+
+
+CSS Module을 사용하면 클래스 이름을 지을 때 그 고유성에 대해 고민하지 않아도 된다.
+흔히 사용하는 단어로 이름을 짓는다고 해도 전혀 문제되지 않는다. 
+해당 클래스는 방금 만든 스타일을 직접 불러온 컴포넌트 내부에서만 작동하기 때문이다.
+
+만약 특정 클래스가 웹 페이지에서 전역적으로 사용되는 경우라면 :global 을 앞에 입력하여 글로벌 CSS임을 명시해 줄 수 있다.
+
+다 작성했다면 위 CSS Module을 사용하는 리액트 컴포넌트를 작성해보자.
+
+
+import React from 'react';
+import styles from './CSSModule.module.css';
+
+const CSSModule = () => {
+    return (
+        <div className={styles.wrapper}>
+            안녕하세요, 저는 <span className="something">CSS Module!</span>
+            {console.log(styles)}
+        </div>
+    );
+};
+
+export default CSSModule;
+
+
+CSS Module이 적용된 스타일 파일을 불러오면 객체를 하나 전달받는데, CSS Module에서 사용한 클래스 이름과
+해당 이름을 고유화한 값이 키-값 형태로 들어있다.
+위 console.log(styles) 에서의 결과는
+
+
+{ wrapper: "CSSModule_wrapper_1SbdQ" }
+
+
+와 같이 파일 이름_클래스 이름_해시값이 붙어 있다.
+
+이 고유한 클래스 이름을 사용하려면 클래스를 적용하고 싶은 JSX 엘리먼트에 className={styles.[클래스이름]} 형태로
+전달해 주면 된다. :global을 사용하여 전역적으로 선언한 클래스의 경우 평상시 해 왔던 것처럼 그냥 문자열로 넣어 준다.
+
+CSSModule 관련 컴포넌트 작성을 모두 했다면 App 컴포넌트에서 렌더링 해주자.
+
+
+import React, { Component } from 'react';
+import CSSModule from './CSSModule';
+
+class App extends Component {
+  render() {
+    return (
+      <div>
+        <CSSModule />
+      </div>
+    );
+  }
+}
+
+export default App;
+
+
+CSS Module이 잘 적용됐는지 확인해보자.
+
+CSS Module을 사용한 클래스 이름을 두 개 이상 적용할 때는 다음과 같이 코드를 작성하면 된다.
+
+
+/* 자동으로 고유해질 것이므로 흔히 사용되는 단어를 클래스 이름으로 마음대로 사용 가능 */
+
+.wrapper {
+  background: black;
+  padding: 1rem;
+  color: white;
+  font-size: 2rem;
+}
+
+.inverted {
+  color: black;
+  background: white;
+  border: 1px solid black;
+}
+
+/* 글로벌 CSS를 작성하고 싶다면 */
+
+:global .something {
+  font-weight: 800;
+  color: aqua;
+}
+
+
+import React from 'react';
+import styles from './CSSModule.module.css';
+
+const CSSModule = () => {
+    return (
+        <div className={`{styles.wrapper} ${styles.inverted}`}>
+            안녕하세요, 저는 <span className="something">CSS Module!</span>
+            {console.log(styles)}
+        </div>
+    );
+};
+
+export default CSSModule;
+
+
+위 코드에선 ES6 문법 템플릿 리터럴을 사용하여 문자열을 합해준다.
+이 문법을 사용하면 문자열 안에 자바스크립트 레퍼런스를 쉽게 넣어 줄 수 있다.
+
+
+const name = '리액트'
+// const message = '제 이름은 ' + name + '입니다.'
+const message = `제 이름은 ${name}입니다.`;
+
+
+여기서 사용되는 ` 문자는 백틱(Backtick)이라 불리며, 키보드에서 숫자 1 왼쪽 키에 있다.
+
+CSS Module 클래스를 여러 개 사용할 때 리터럴 문법을 사용하고 싶지 않다면 다음과 같이 작성할 수도 있다.
+
+
+className={[styles.wrapper, styles.inverted].join(' ')}
+
+
+        9.3.1 classnames
+
+classnames는 CSS 클래스를 조건부로 설정할 때 매우 유용한 라이브러리다.
+또한, CSS Module을 사용할 때 이 라이브러리를 사용하면 여러 클래스를 적용할 때 매우 편하다.
+우선 해당 라이브러리를 설치하자.
+
+
+$ yarn add classnames
+
+
+classnames의 기본적인 사용법을 한번 훑어보자.
+
+
+classnames 사용법
+
+import classNAmes from 'classnames';
+
+classNames('one', 'two'); // 'one two'
+classNames('one', { two: true });   // 'one two'
+classNames('one', { two: false });  // 'one'
+classNames('one', { 'two': 'three' });  // 'one two three'
+
+const myClass = 'hello'
+classNames('one', myClass, { myCondition: true });  // 'one two myCondition'
+
+
+이런 식으로 여러 가지 종류의 파라미터를 조합해 CSS 클래스를 설정할 수 있기 때문에 컴포넌트에서
+조건부로 클래스를 설정할 때 매우 편하다. 예를 들어 props 값에 따라 다른 스타일을 주기가 쉬워진다.
+
+
+예시 코드
+
+const MyComponent = ({ highlighted, theme }) => {
+    <div className={classNames('MyComponent', { highlighted }, theme)}>Hello<div>
+}
+
+
+이렇게 할 경우, 위 엘리먼트의 클래스에 highlighted 값이 true이면 highlighted 클래스가 적용되고,
+false이면 적용되지 않는다. 추가로 theme 으로 전달받는 문자열은 내용 그대로 클래스에 적용된다.
+이런 라이브러리의 도움을 받지 않는다면 다음과 같안 형식으로 처리해야 할 것이다.
+
+
+예시 코드
+
+const MyComponent = ({ highlighted, theme }) => {
+    <div className={classNames(`MyComponent ${theme} ${highlighted ? 'highlighted' : ''}`)}>
+        Hello
+    <div>
+}
+
+
+classnames를 쓰는 것이 가독성이 더 높다.
+
+덧붙여 CSS Module과 함께 사용하면 CSS Module 사용이 훨씬 쉬워진다. classnames에 내장되어 있는 bind 함수를 사용하면
+클래스를 넣어 줄 때마다 styles.[클래스 이름] 형태를 사용할 필요가 없어진다.
+사전에 미리 styles에서 받아 온 후 사용하게끔 설정해 두고 cx('클래스 이름', '클랴스 이름2') 형태로 사용할 수 있다.
+
+다음 코드는 우리가 만은 CSSModule 컴포넌트에 classnames의 bind 함수를 적용한 예이다.
+
+
+import React from 'react';
+import classNames from 'classnames/bind';
+import styles from './CSSModule.module.css';
+
+const cx = classNames.bind(styles); // 미리 styles 에서 클래스를 받아 오도록 설정
+
+const CSSModule = () => {
+    return (
+        <div className={cx('wrapper', 'inverted')}>
+            안녕하세요, 저는 <span className="something">CSS Module!</span>
+            {console.log(styles)}
+        </div>
+    );
+};
+
+export default CSSModule;
+
+
+CSS Module을 사용할 때 클래스를 여러 개 설정하거나, 또는 조건부로 클래스를 설정할 때 classnames 의 bind를
+사용하면 훨씬 편리하게 작성할 수 있다.
+
+
+        9.3.2 Sass와 함께 사용하기
+
+Sass를 사용할 때도 파일 이름 뒤에 .module.scss 확장자를 사용해 주면 CSS Module로 사용할 수 있다.
+CSSModule.module.css 파일의 이름을 CSSModule.module.scss로 한번 변경해보자.
+스타일 코드도 이에 따라 조금 수정해본다.
+
+
+/* 자동으로 고유해질 것이므로 흔히 사용되는 단어를 클래스 이름으로 마음대로 사용 가능 */
+
+.wrapper {
+  background: black;
+  padding: 1rem;
+  color: white;
+  font-size: 2rem;
+  &.inverted {
+    // inverted가 .wrapper와 함께 사용됐을 때만 사용
+    color: black;
+    background: white;
+    border: 1px solid black;
+  }
+}
+
+/* 글로벌 CSS를 작성하고 싶다면 */
+:global {
+  // :global {}로 감싸지
+  .something {
+    font-weight: 800;
+    color: aqua;
+  }
+  // 여기에 다른 클래스를 만들 수 있다.
+}
+
+
+그리고 나서 CSSModule.js 상단에도 .css 파일 대신 .scss 파일을 불러오자.
+
+
+import styles from './CSSModule.module.scss';
+
+
+이전과 똑같은지 확인하자.
+
+
+        9.3.3 CSSModule이 아닌 파일에서 CSS Module 사용하기
+
+CSS Module에서 글로벌 클래스를 정의할 때 :global을 사용했던 것처럼 CSS  Module이 아닌
+일반 .css/.scss 파일에서도 :local을 사용하여 CSS Module을 사용할 수 있다.
+
+
+:local .wrapper {
+  /* 스타일 */
+}
+
+:local {
+  .wrapper {
+    /* 스타일 */
+  }
+}

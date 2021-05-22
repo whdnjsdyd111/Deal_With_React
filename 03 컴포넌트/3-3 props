@@ -1,0 +1,353 @@
+            3.3 props
+
+props는 properties를 줄인 표현으로 컴포넌트 속성을 설정할 때 사용하는 요소이다.
+props 값은 해당 컴포넌트를 불러와 사용하는 부모 컴포넌트(현재 App이 부모 컴포넌트)에서 설정할 수 있다.
+
+
+        3.3.1 JSX 내부에서 props 렌더링
+
+우선 MyComponent 컴포넌트를 수정하여 해당 컴포넌트에서 name 이라는 props를 렌더링하도록 설정해본다.
+props 값은 컴포넌트 함수의 파라미터로 받아 와서 사용할 수 있다.
+props를 렌더링할 때 2장에서 배운 것처럼 JSX 내부에  { }  기호로 감싸주면 된다.
+
+
+import React from 'react';
+
+const MyComponent = props => {
+    return <div>안녕하세요, 제 이름은 {props.name}입니다.</div>
+};
+
+export default MyComponent;
+
+
+        3.3.2 컴포넌트를 사용할 때 props 값 지정하기
+
+App 컴포넌트에서 MyComponent 의 props 값을 지정해보자.
+App.js 의 코드를 다음과 같이 수정해보자.
+
+
+import React from 'react';
+import MyComponent from './MyComponent';
+
+const App = () => {
+  return <MyComponent name="React" />;
+};
+
+export default App;
+
+
+코드를 저장하고 확인해보자.
+
+
+        3.3.3 props 기본값 설정: defaultProps
+
+방금 설정한 name 값을 지우고 다시 저장해보자.
+
+
+return <MyComponent />;
+
+
+현재 name 값을 지정하지 않았기 때문에 브라우저에는 '안녕하세요. 제 이름은 입니다.'라는 내용이 보일 것이다.
+지금처럼 props 값을 따로 지정하지 않았을 때 보여줄 기본값을 설정하는 defaultProps에 대해 알아보자.
+
+이 값을 설정하는 방법은 다음과 같다.
+
+
+import React from 'react';
+
+const MyComponent = props => {
+    return <div>안녕하세요, 제 이름은 {props.name}입니다.</div>
+};
+
+MyComponent.defaultProps = {
+    name: '기본 이름'
+};
+
+export default MyComponent;
+
+
+파일을 저장하고 확인해보자.
+
+
+        3.3.4 태그 사이의 내용을 보여주는 children
+
+리액트 컴포넌트를 사용할 때 컴포넌트 태그 사이의 내용을 보여주는 props가 있는데, 바로 children 이다.
+App 컴포넌트를 다음과 같이 수정해보자.
+
+
+import React from 'react';
+import MyComponent from './MyComponent';
+
+const App = () => {
+  return <MyComponent >리액트</MyComponent>;
+};
+
+export default App;
+
+
+위 코드에선 MyComponent 태그 사이에 작성한 리액트라는 문자열을 MyComponent 내부에서 보여 주려면 props.children 값을
+보여줘야 한다.
+MyComponent를 다음과 같이 수정해보자.
+
+브라우저에 결과물을 확인해보자.
+
+
+        3.3.5 비구조화 할당 문법을 통해 props 내부 값 추출하기
+
+현재 MyComponent 에서 props 값을 조회할 때마다 props, name, props.children과 같이 props. 이라는 키워드를 앞에 붙여 주고 있다.
+이러한 작업을 편하기위해 ES6의 주고화 할당 문법을 사용하여 내부 값을 바로 추출하는 방법을 알아보자.
+MyComponent를 다음과 같이 수정해보자.
+
+
+import React from 'react';
+
+const MyComponent = props => {
+    const { name, children } = props;
+    return (
+        <div>
+            안녕하세요, 제 이름은 {name}입니다.<br />
+            children 값은 {children}
+            입니다.
+        </div>
+    )
+};
+
+MyComponent.defaultProps = {
+    name: '기본 이름'
+};
+
+export default MyComponent;
+
+
+이렇게 코드를 작성하면 name 값과 children 값을 더 짧은 코드로 사용할 수 있다.
+방금 사용한, 객체에서 값을 추출하는 문법을 비구조화 할당이라고 부른다.
+이 문접은 구조 분해 문법이라고도 하며, 함수의 파라미터 부분에서도 사용할 수 있다.
+만약 함수의 파라미터가 객체라면 그 값을 바로 비구조화해서 사용하는 것이다.
+코드를 다음과 같이 수정해보자.
+
+
+import React from 'react';
+
+const MyComponent = ({ name, children }) => {
+    return (
+        <div>
+            안녕하세요, 제 이름은 {name}입니다.<br />
+            children 값은 {children}
+            입니다.
+        </div>
+    )
+};
+
+MyComponent.defaultProps = {
+    name: '기본 이름'
+};
+
+export default MyComponent;
+
+
+이렇게 props를 사용하면 훨씬 편하다. 이 책에서는 앞으로 함수형 컴포넌트에서 props를 사용할 때
+이렇게 파라미터 부분에서 비구조화 할당 문법을 사용한다.
+
+
+        3.3.6 propTypes를 통한 props 검증
+
+컴포넌트의 필수 props를 지정하거나 props의 타입을 지정할 때는 propTypes를 사용한다.
+컴포넌트의 propTypes를 지정하는 방법은 defaultProp 을 설정하는 것과 비슷하다.
+우선 propTypes를 사용하려면 상단에 import 구문을 사용하여 불러와야 한다.
+
+
+import React from 'react';
+import PropTypes from 'prop-types';
+
+const MyComponent = ({ name, children }) => {
+    ...
+
+
+PropTypes를 불러왔다면 코드 하단에 다음과 같이 입력해보자.
+
+
+import React from 'react';
+import PropTypes from 'prop-types';
+
+const MyComponent = ({ name, children }) => {
+    return (...)
+};
+
+MyComponent.defaultProps = {
+    name: '기본 이름'
+};
+
+MyComponent.propTypes = {
+    name: PropTypes.string
+};
+
+export default MyComponent;
+
+
+이렇게 설정해주면 name 값은 무조건 문자열 형태로 전달해야 된다는 것을 의미한다.
+App 컴포넌트에서 name 값을 문자열이 아닌 숫자로 전달한 뒤 개발자 도구의 Console 탭을 열어보자.
+
+
+import React from 'react';
+import MyComponent from './MyComponent';
+
+const App = () => {
+  return <MyComponent name={3}>리액트</MyComponent>;
+};
+
+export default App;
+
+
+만약 컴포넌트에 설정한 props가 propTypes에서 지정한 형태와 일치하지 않는다면 브라우저 개발자 도구에선 오류가 난다.
+값이 나타나기는 했지만, 콘솔에 경고 메시지를 출력하여 개발자에게 propTypes가 잘못되었다는 것을 알려준다.
+오류 메시지를 확인 후 name 값을 제대로 설정하자.
+
+
+import React from 'react';
+import MyComponent from './MyComponent';
+
+const App = () => {
+  return <MyComponent name="React">리액트</MyComponent>;
+};
+
+export default App;
+
+
+이제 오류가 사라질 것이다.
+
+
+        3.3.6.1 isRequired를 사용하여 필수 propTypes 설정
+
+propTypes를 지정하지 않았을 때 경고 메시지를 띄워 주는 작업을 해주었다. propTypes를 지정할 때
+뒤에 isRequired를 붙여 주면 된다. 이번에는 favoriteNumber라는 숫자를 필수 props로 지정해보자.
+
+
+import React from 'react';
+import PropTypes from 'prop-types';
+
+const MyComponent = ({ name, favoriteNumber, children }) => {
+    return (
+        <div>
+            안녕하세요, 제 이름은 {name}입니다.<br />
+            children 값은 {children}
+            입니다.
+            <br />
+            제가 좋아하는 숫자는 {favoriteNumber}입니다.
+        </div>
+    )
+};
+
+MyComponent.defaultProps = {
+    name: '기본 이름'
+};
+
+MyComponent.propTypes = {
+    name: PropTypes.string,
+    favoriteNumber: PropTypes.number.isRequired
+};
+
+export default MyComponent;
+
+
+코드를 저장하고 다시 브라우저를 열면 favoriteNumber를 설정하지 않아 경고가 나타날 것이다.
+경고를 확인하고 MyComponent에게 favoriteNumber 값을 제대로 전달해보자.
+
+
+import React from 'react';
+import MyComponent from './MyComponent';
+
+const App = () => {
+  return <MyComponent name="React" favoriteNumber={1}>리액트</MyComponent>;
+};
+
+export default App;
+
+
+        3.3.6.2 더 많은 PropTypes 종류
+
+PropTypes에서는 여러 가지 종류를 설정할 수 있다. 어떤 것이 있는지 짚고 넘어가자.
+
+    - array : 배열
+    - arrayOf(다른 PropTypes) : 특정 PropType으로 이루어진 배열을 의미한다.
+        예로 arrayOf(PropTypes.number)는 숫자로 이루어진 배열이다.
+    - bool : true 혹은 false 값
+    - func : 함수
+    - number : 숫자
+    - object : 객체
+    - string : 문자열
+    - symbol : ES6의 Symbol
+    - node : 렌더링할 수 있는 모든 것(숫자, 문자열, 혹은 JSX 코드.children도 node PropTypes이다.)
+    - instanceOf(클래스) : 특정 클래스의 인스턴스(예: instanceOf(MyClass))
+    - oneOf(['dog', 'cat']) : 주어진 배열 요소 중 값 하나
+    - oneOfType([React.PropTypes.string, PropTypes.number]) : 주어진 배열 안의 종류 중 하나
+    - objectOf(React.PropTypes.number) : 객체의 모든 키 값이 인자로 주어진 PropType 인 객체
+    - shape({ name: PropTypes.string, num:PropTypes.number }) : 주어진 스키마를 가진 객체
+    - any : 아무 종류
+
+
+        3.3.7 클래스형 컴포넌트에서 props 사용
+
+클래스형 컴포넌트에서 props를 사용할 때는 render 함수에서 this.props를 조회하면 된다.
+그리고 defaultProps와 propTypes는 똑같은 방식으로 설정할 수 있다.
+MyComponent를 다음과 같이 클래스형 컴포넌트로 변환해보자.
+
+
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+
+class MyComponent extends Component {
+    render() {
+        const { name, favoriteNumber, children } = this.props;  // 비구조화 할당
+        return (
+            <div>
+                안녕하세요, 제 이름은 {name}입니다.<br />
+                children 값은 {children}
+                입니다.
+                <br />
+                제가 좋아하는 숫자는 {favoriteNumber}입니다.
+            </div>
+        )
+    }
+};
+
+MyComponent.defaultProps = {
+    name: '기본 이름'
+};
+
+MyComponent.propTypes = {
+    name: PropTypes.string,
+    favoriteNumber: PropTypes.number.isRequired
+};
+
+export default MyComponent;
+
+
+클래스형 컴포넌트에서 defaultProps와 propTypes를 설정할 때 class 내부에서 지정하는 방법도 있다.
+
+
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+
+class MyComponent extends Component {
+    static defaultProps = {
+        name: '기본 이름'
+    }
+
+    static propTypes = {
+        name: PropTypes.string,
+        favoriteNumber: PropTypes.number.isRequired
+    };
+
+    render() {
+        const { name, favoriteNumber, children } = this.props;  // 비구조화 할당
+        return (...)
+    }
+};
+
+export default MyComponent;
+
+
+    노트 defaultProps와 propTypes
+
+이 두 설정은 꼭 필요한 것은 아니며 큰 프로젝트에서 개발자 간의 협업에서 어떤 props가
+필요한지 쉽게 알 수 있어 개발 능률이 좋아진다.

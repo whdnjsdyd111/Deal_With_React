@@ -1,0 +1,12 @@
+            22.6 MongoDB Compass 의 설치 및 사용
+
+MongoDB Compass는 MongoDB를 위한 GUI 프로그램으로, 데이터베이스를 쉽게 조회하고 수정할 수 있다.
+
+https://www.mongodb.com/download-center/compass
+
+위 사이트에서 좌측 Version에서 Community Edition Stable 이라고 적힌 항목을 선택하여 설치하자.
+
+Hostname과 Port 부분에 localhost와 27017이 기본값으로 들어가 있을 것이다.
+하단의 CONNECT 버튼을 눌러보자.
+
+추후 데이터베이스에 데이터를 등록하고 나면 이 프로그램을 통해 데이터를 쉽게 조회할 수 있다.

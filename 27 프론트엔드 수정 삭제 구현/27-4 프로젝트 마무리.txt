@@ -1,0 +1,154 @@
+            27.4 프로젝트 마무리
+
+프로젝트를 완성한 뒤에는 어떤 작업을 해야하는 지 알아보자.
+
+
+        27.4.1 프로젝트 빌드하기
+
+우선 백엔드 서버를 통해 리액트 앱을 제공할 수 있도록 빌드해 주어야 한다.
+클라이언트 프로젝트 디렉터리에서 다음 명령어를 실행하자.
+
+
+$ yarn build
+
+
+작업이 끝나면 blog-frontend 에 build 디렉터리가 생성된다.
+
+
+        27.4.2 koa-static 으로 정적 파일 제공하기
+
+서버를 통해 blog-frontend/build 디렉터리 안의 파일을 사용할 수 있도록 koa-static을 사용하여 정적 파일 제공 기능을 구현해 본다.
+서버 프로젝트 디렉터리에서 다음 명령어를 실행하여 koa-static을 설치하자.
+
+
+$ yarn add koa-static
+
+
+이어서 main.js 를 다음과 같이 수정해 본다.
+
+
+require('dotenv').config();
+import Koa from 'koa';
+import Router from 'koa-router';
+import bodyParser from 'koa-bodyparser';
+import mongoose from 'mongoose';
+import serve from 'koa-static';
+import path from 'path';
+import send from 'koa-send';
+
+import api from './api';
+import jwtMiddleware from './lib/jwtMiddleware';
+
+...
+
+// app 인스턴스에 라우터 적용
+app.use(router.routes()).use(router.allowedMethods());
+
+const buildDirectory = path.resolve(__dirname, '../../blog-frontend/build');
+app.use(serve(buildDirectory));
+app.use(async ctx => {
+    // Not Found이고, 주소가 /api로 시작하지 않는 경우
+    if(ctx.status === 404 && ctx.path.indexOf('/api') !== 0) {
+        // index.html 내용을 반환
+        await send(ctx, 'index.html', { root: buildDirectory });
+    }
+})
+
+// PORT가 지정되어 있지 않다면 4000을 사용
+const port = PORT || 4000;
+app.listen(port, () => {
+    console.log('Listening to port %d', port);
+});
+
+
+koa-static 을 사용하여 blog-frontend/build 디렉터리에 있는 파일들을 서버를 통해 조회할 수 있게 해 주었다.
+추가로 하단에 send 라는 함수를 사용하는 미들웨어를 작성했는데, 이 미들웨어는 클라이언트 기반 라우팅이 제대로 작동하게 해 준다.
+HTTP 상태가 404이고 주소가 /api로 시작하지 않으면, index.html의 내용을 응답한다.
+이 미들웨어를 적용하지 않으면 http://localhost:4000/write 페이지를 브라우저 주소창에 직접 입력하여 들어갈 경우,
+페이지가 제대로 나타나지 않고 Not Found가 나타나게 된다.
+
+이제 브라우저 주소창에 http://localhost:4000/ 주소를 입력하여 들어가 보자. 개발 서버에서 보았던 화면이 제대로 나타는지 확인한다.
+포스트 페이지를 열고 새로고침을 했을 때도 포스트 내용이 잘 나타나는지 확인한다.
+
+
+        27.4.3 더 할 수 있는 작업
+
+이제 프로젝트 개발은 끝났다 여기서 앞으로 더 할 수 있는 작업을 살펴보자.
+
+
+    27.4.3.1 코드 스플리팅
+
+현재 프로젝트에서 가장 큰 자바스크립트 파일의 크기는 약 138KB 이다.
+현재는 프로젝트 규모가 그렇게 크지 않으므로 코드 스플리팅이 반드시 필요한 것은 아니다.
+하지만 프로젝트에 기능이 더 많이 추가되어 500KB를 넘어가기 시작하면 코드 스플리팅에 대해 생각해 보는 것도 좋다.
+
+코드 스플리팅은 프로젝트 규모가 커졌을 때 도입하는 것이 바람직하기는 하지만, 프로젝트를 장기적으로 유지 보수할 것 같나면
+초반부터 도입하는 것을 추천한다. 왜냐면, 개발을 계속하면서 결국 프로젝트의 규모가 커질 확률이 높기 때문이다.
+
+
+    27.4.3.2 서버 호스팅
+
+우리가 만든 웹 애플리케이션을 로컬 환경에서만 사용하는 것이 아니라 다른 사람도 사용하게 하려면,
+MongoDB 서버와 Node.js 로 만든 API 서버가 구동될 수 있는 서버를 호스팅받아야 한다. 다음 대표 서비스들이다.
+
+
+    - AWS EC2 : https://aws.amazon.com/ko/ec2
+    - Google Cloud Compute Engine : https://cloud.google.com/compute/pricing
+    - NCloud Compute : https://www.ncloud.com/product/compute
+    - Vultr : https://www.vultr.com/pricing/
+
+
+    27.4.3.3 서버 사이드 렌더링
+
+현재 프로젝트에는 서버 사이드 렌더링이 구현되어 있지 않다. 하지만 서버 사이드 렌더링을 해야 한다면 어떻게 구성할까?
+우선 서버 엔트리 코드에서 우리가 만든 axios 클라이언트 client 인스턴스에 baseURL을 설정해 주어야 한다.
+
+
+import client from './lib/api/client';
+client.defaults.baseURL = 'http://localhost:4000';
+
+
+그리고 21장에서 배운 것처럼 서버 사이드 렌더링을 적용하고, 서버 컴퓨터에서 두 종류의 서버를 구동해야 한다.
+하나는 API 서버이고, 다른 하나는 서버 사이드 렌더링 전용 서버다. 그리고 nginx 를 사용하여 사용자가 요청한 경로에 따라 
+다른 서버에서 처리하게끔 하면 된다. 또한, nginx 를 사용하는 경우에는 정적 파일 제공을 Node.js 서버가 아닌 nginx 자체적으로
+처리하는 것이 성능상 더 빠르다.
+
+
+                    ┌───────────┐
+                nginx  ←────    /static/...
+        /write  │   │ 
+        /@user  │   │   /api/posts
+        SSR 서버┘   │   /api/auth/login
+                    └─ API 서버
+
+
+다음은 nginx 설정의 예시이다.
+
+
+server {
+    listen      8000;
+    server_name localhost;
+
+    location    /api/ {
+        proxy_pass          http://localhost:4000
+        proxy_set_header    Upgrade $http_upgrade;
+        proxy_set_header    Connection 'upgrade';
+        proxy_set_header    Host $host;
+        proxy_cache_bypass  $http_upgrade;
+    }
+
+    location    /static {
+        alias   /Users/velopert/blog/blog-frontend/build/static;
+    }
+
+    location    / {
+        proxy_pass          http://localhost:5000
+        proxy_set_header    Upgrade $http_upgrade;
+        proxy_set_header    Connection 'upgrade';
+        proxy_set_header    Host $host;
+        proxy_cache_bypass  $http_upgrade;
+    }
+}
+
+
+나중에 직접 만든 프로젝트에 서버 사이드 렌더링을 구현할 경우, 위 구성을 참조하면 도움이 될 것이다.

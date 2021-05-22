@@ -1,0 +1,238 @@
+            23.3 회원 인증 API 만들기
+
+이제 회원 인증 API를 만들어 보겠다. 먼저 새로운 라우트를 정의한다. api 디렉터리에 auth 디렉터리를 생성하고 그 안에
+auth.ctrl.js 를 작성한다.
+
+
+export const register = async (ctx) => {
+    // 회원가입
+};
+
+export const login = async (ctx) => {
+    // 로그인
+};
+
+export const check = async (ctx) => {
+    // 로그인 상태 확인
+};
+
+export const logout = async (ctx) => {
+    // 로그아웃
+};
+
+
+이번 라우트에서는 총 네 개의 API를 만들 것이다. 이렇게 함수의 틀만 잡아주고, auth 디렉터리에
+index.js 파일을 만들어서 auth 라우터를 생성한다.
+
+
+import Router from 'koa-router';
+import * as authCtrl from './auth.ctrl';
+
+const auth = new Router();
+
+auth.post('/register', authCtrl.register);
+auth.post('/login', authCtrl.login);
+auth.get('/check', authCtrl.check);
+auth.post('/logout', authCtrl.logout);
+
+export default auth;
+
+
+그다음에는 auth 라우터를 api 라우터에 적용한다.
+
+
+import Router from 'koa-router';
+import posts from './posts';
+import auth from './auth';
+
+const api = new Router();
+
+api.use('/posts', posts.routes());
+api.use('/auth', auth.routes());
+
+// 라우터를 내보낸다.
+export default api;
+
+
+API 라우트 구조를 다 잡아 놓았으니 이제 본격적으로 기능을 하나씩 구현해 보자.
+
+
+        23.3.1 회원가입 구현하기
+
+src/api/auth 디렉터리에 auth.ctrl.js 파일을 만들고 register 함수를 다음과 같이 작성해 본다.
+
+
+import Joi from '@hapi/joi';
+import User from '../../models/user';
+
+/*
+    POST /api/auth/register
+    {
+        username: 'velopert',
+        password: 'mypass123'
+    }
+*/
+export const register = async (ctx) => {
+    // Request Body 검증하기
+    const schema = Joi.object().keys({
+        username: Joi.string().alphanum().min(3).max(20).required(),
+        password: Joi.string().required(),
+    });
+    const result = schema.validate(ctx.request.body);
+    if(result.error) {
+        ctx.status = 400;
+        ctx.body = result.error;
+        return;
+    }
+
+    const { username, password } = ctx.request.body;
+    try {
+        // username이 이미 존재하는지 확인
+        const exists = await User.findByUsername(username);
+        if(exists) {
+            ctx.status = 409;   // Conflict
+            return;
+        }
+
+        const user = new User({
+            username,
+        });
+        await user.setPassword(password);   // 비밀번호 설정
+        await user.save();  // 데이터베이스에 저장
+
+        // 응답할 데이터에서 hashedPassword 필드 제거
+        const data = user.toJSON();
+        delete data.hashedPassword;
+        ctx.body = data;
+    } catch (e) {
+        ctx.throw(500, e);
+    }
+};
+
+
+회원가입 할 때 중복되는 계정이 생성되지 않도록 기존에 해당 username 이 존재하는지 확인했다.
+이 작업은 findByUsername 스태틱 메소드를 사용해 처리했다. 그리고 비밀번호를 설정하는 과정에서는 
+setPassword 인스턴스 함수를 사용했다.
+
+이렇게 스태틱 또는 인스턴스 함수에서 해야 하는 작업들을 이 API 함수 내부에서 직접 구현해도 상관없지만, 이렇게
+메소드들을 만들어서 사용하면 가독성도 좋고 추후 유지 보수를 할 때도 도움이 된다.
+
+함수의 마지막 부분에서는 hashedPassword 필드가 응답되지 않도록 데이터를 JSON으로 변환한 후 delete를 통해 해당 필드를
+지워 주었는데, 앞으로 비슷한 작업을 자주 하게 될 것이다. 따라서 이 작업을 serialize 라는 인스턴스 함수로 따로 만들어 준다.
+
+다음 인스턴스 메소드를 user.js 모델 파일에 넣어 준다.
+
+
+UserSchema.methods.serialize = function () {
+    const data = this.toJSON();
+    delete data.hashedPassword;
+    return data;
+};
+
+
+이제 기존의 코드를 user.serialize()로 대체시키자.
+
+
+export const register = async (ctx) => {
+    ...
+
+        const user = new User({
+            username,
+        });
+        await user.setPassword(password); // 비밀번호 설정
+        await user.save(); // 데이터베이스에 저장
+
+        // 응답할 데이터에서 hashedPassword 필드 제거
+        ctx.body = user.serialize();
+    } catch (e) {
+        ctx.throw(500, e);
+    }
+};
+
+
+이제 이 API가 잘 작동하는지 확인하기 위해 다음 요청을 Postman으로 테스트해 보자.
+
+
+POST http://localhost:4000/api/auth/register
+{
+    "username": "velopert",
+    "password": "mypass123"
+}
+
+
+다음과 같은 응답이 나타날 것이다.
+
+
+{
+    "_id": "5febcf8f1d69233f983b27db",
+    "username": "velopert",
+    "__v": 0
+}
+
+
+Compass를 통해 데이터베이스에 실제로 데이터가 잘 생성됐는지 확인해 보자.
+users 컬렉션이 나타나 데이터가 등록되어 있는 것을 확인할 수 있다.
+
+데이터가 잘 만들어진 것을 확인했으면 같은 username으로 다시 요청을 보내보자.
+중복된 username으로 요청을 보냈을 때는 Conflict 라는 총돌 에러가 발생한다.
+
+
+        23.3.2 로그인 구현하기
+
+이번에는 로그인 기능을 구현해 본다. login 함수를 다음과 같이 작성한다.
+
+
+export const login = async (ctx) => {
+    const { username, password } = ctx.request.body;
+
+    // username, password가 없으면 에러 처리
+    if(!username || !password) {
+        ctx.status = 400;   // Unauthorized
+        return;
+    }
+
+    try {
+        const user = await User.findByUsername(username);
+        // 계정이 존재하지 않으면 에러 처리
+        if(!user) {
+            ctx.status = 401;
+            return;
+        }
+        const valid = await user.checkPassword(password);
+        // 잘못된 비밀번호
+        if(!valid) {
+            ctx.status = 401;
+            return;
+        }
+        ctx.body = user.serialize();
+    } catch (e) {
+        ctx.throw(500, e);
+    }
+};
+
+
+이 API 에서는 username, password 값이 제대로 전달되지 않으면 에러로 처리한다. 그리고 findByUsername을 통해
+사용자 데이터를 찾고, 만약 사용자 데이터가 없으면 역시 에러로 처리한다.
+계정이 유효하다면 checkPassword를 통해 비밀번호를 검사하고 성공했을 때는 계정 정보를 응답한다.
+
+코드를 다 작성했다면 Postman으로 조금 전에 생성했던 계정 정보로 로그인 API를 요청해 보자.
+
+
+POST http://localhost:4000/api/auth/login
+{
+    "username": "velopert",
+    "password": "mypass123"
+}
+
+
+다음과 같은 사용자 정보가 응답할 것이다.
+
+
+{
+    "_id": "5febcf8f1d69233f983b27db",
+    "username": "velopert",
+    "__v": 0
+}
+
+
+잘 작동했다면 틀린 비밀번호도 요청해보자. 401 Unauthorized 에러가 발생할 것이다.

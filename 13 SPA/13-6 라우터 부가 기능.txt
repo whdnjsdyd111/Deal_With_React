@@ -1,0 +1,250 @@
+            13.6 리액트 라우터 부가 기능
+
+        13.6.1 history
+
+history 객체는 라우터로 사용된 컴포넌트에 match, location 과 함께 전달되는 props 중 하나로,
+이 객체를 통해 컴포넌트 내에 구현하는 메소드에서 라우터 API를 호출할 수 있다.
+예를 들어 특정 버튼을 눌렀을 때 뒤로 가거나, 로그인 후 화면을 전환하거나, 다른 페이지로 이탈하는 것을
+방지해야 할 때 history를 활용한다.
+
+이 객체를 사용하는 예제 페이지를 한번 작성해보자. HistorySample 이라는 컴포넌트를 다음과 같이 만들어보자.
+
+
+import React, { Component } from 'react';
+
+class HistorySample extends Component {
+    // 뒤로 가기
+    handleGoBack = () => {
+        this.props.history.goBack();
+    };
+
+    // 홈으로 이동
+    handleGoHome = () => {
+        this.props.history.push('/');
+    };
+
+    componentDidMount() {
+        // 이것을 설정하고 나면 페이지에 변화가 생기려고 할 때마다 정말 나갈 것인지를 질문
+        this.unblock = this.props.history.block('정말 떠나실 건가요?');
+    }
+
+    componentWillUnmount() {
+        // 컴포넌트가 언마운트되면 질문을 멈춤
+        if(this.unblock) {
+            this.unblock();
+        }
+    }
+
+    render() {
+        return (
+            <div>
+                <button onClick={this.handleGoBack}>뒤로</button>
+                <button onClick={this.handleGoHome}>홈으로</button>
+            </div>
+        );
+    }
+}
+
+export default HistorySample;
+
+
+다 만든 뒤에는 App 에서 /history 경로에 해당 컴포넌트가 보이도록 설정해 보자.
+
+이제 history로 접속해서 페이지 하단에 버튼들이 잘 작동하는지 눌러보자.
+
+
+        13.6.2 withRouter
+
+withRouter 함수는 HoC(Higher-order Component)이다. 라우트로 사용된 컴포넌트가 아니어도
+match, location, history 객체를 접근할 수 있게 해준다.
+withRouterSample 이라는 컴포넌트를 만들어서 withRouter 함수를 사용해보자.
+
+
+import React from 'react';
+import { withRouter } from 'react-router-dom';
+
+const WithRouterSmaple = ({ location, match, history }) => {
+    return (
+        <div>
+            <h4>location</h4>
+            <textarea
+                value={JSON.stringify(location, null, 2)}
+                rows={7}
+                readOnly={true}
+                />
+            <h4>match</h4>
+            <textarea
+                value={JSON.stringify(match, null, 2)}
+                rows={7}
+                readOnly={true}
+                />
+            <button onClick={() => history.push('/')}>홈으로</button>
+        </div>
+    );
+};
+
+export default WithRouterSmaple;
+
+
+이 코드처럼 withRouter를 사용할 때는 컴포넌트를 내보내 줄 때 함수로 감싸준다.
+JSON.stringify 의 두 번째 파라미터와 세 번째 파라미터를 위와 같이 null, 2 로 설정해 주면
+JSON에 들여쓰기가 적용된 상태로 문자열이 만들어진다.
+
+다 만들었다면 이 컴포넌트를 Profiles 컴포넌트에 렌더링해보자.
+
+
+import React from 'react';
+import { Link, Route } from 'react-router-dom';
+import Profile from './Profile';
+import WithRouterSmaple from './WithRouterSample';
+
+const Profiles = () => {
+    return (
+        <div>
+            ...
+            <WithRouterSmaple />
+        </div>
+    );
+};
+
+export default withRouter(WithRouterSmaple);
+
+
+이제 profiles 경로로 페이지에 들어가보자. 하단에 location과 match 객체의 정보가 나타난다.
+
+그런데 여기서 match 객체를 보면 params 가 비어있다. withRouter를 사용하면 현재 자신을 보여주고 있는
+라우터 컴포넌트(현재 Profiles)를 기준으로 match가 전달된다. Profiles를 위한 라우트를 설정할 때는
+path="/profiles" 라고만 입력했으므로 username 파라미터를 읽어오지 못하는 상태이다.
+
+WithRouterSample 컴포넌트를 Profiles에서 지우고 Profile 컴포넌트에 넣으면 match 쪽에 URL 파라미터가 제대로 보일 것이다.
+
+
+import React from 'react';
+import { withRouter } from 'react-router-dom';
+import WithRouterSample from './WithRouterSample';
+
+...
+
+const Profile = ({ match }) => {
+    const { username } = match.params;
+    const profile = data[username];
+    if(!profile) {
+        return <div>존재하지 않는 사용자입니다.</div>
+    }
+    return (
+        <div>
+            <h3>
+                {username}({profile.name})
+            </h3>
+            <p>{profile.description}</p>
+            <WithRouterSample />
+        </div>
+    );
+};
+
+export default withRouter(Profile);
+
+
+이번에는 params.username 을 제대로 보여주고 있다.
+
+
+        13.6.3 Switch
+
+Switch 컴포넌트는 여러 Route 를 감싸서 그중 일치하는 단 하나의 라우트만을 렌더링시켜 준다.
+Switch를 사용하면 모든 규칙과 일치하지 않을 때 보여 줄 Not Found 페이지도 구현할 수 있다.
+
+
+import React from 'react';
+import { Route, Link, Switch } from 'react-router-dom';
+import About from './About';
+import Home from './Home';
+import Profiles from './Profiles';
+import HistorySample from './HistorySample';
+
+
+const App = () => {
+  return (
+    <div>
+      <ul>
+        <li>
+          <Link to="/">홈</Link>
+        </li>
+        <li>
+          <Link to="/about">소개</Link>
+        </li>
+        <li>
+          <Link to="/profiles">프로필</Link>
+        </li>
+      </ul>
+      <hr />
+      <Switch>
+        <Route path="/" component={Home} exact={true} />
+        <Route path={[ '/about', 'info' ]} component={About} />
+        <Route path="/profiles" component={Profiles} />
+        <Route path="/history" component={HistorySample} />
+        <Route
+          // path를 따로 정의하지 않으면 모든 상황에서 렌더링됨
+          render={({ location }) => {
+            <div>
+              <h2>이 페이지는 존재하지 않습니다.</h2>
+              <p>{location.pathname}</p>
+            </div>
+          }}
+          />
+      </Switch>
+    </div>
+  );
+};
+
+export default App;
+
+
+이제 존재하지 않는 페이지로 들어가보면 이 페이지는 존재하지 않는다는 문구가 나타난다.
+
+
+        13.6.4 NavLink
+
+NavLink는 Link와 비슷하다. 현재 경로와 Link에서 사용하는 경로가 일치하는 경우 
+특정 스타일 혹은 CSS 클래스를 적용할 수 있는 컴포넌트이다.
+
+NavLink에서 링크가 활성화되었을 때의 스타일을 적용할 때는 activeStyle 값을, CSS 클래스를 적용할 때는
+activeClassName 값을 props로 넣어 주면 된다.
+
+Profiles 에서 사용하고 있는 컴포넌트에서 Link 대신 NavLink를 사용하게 하고,
+현재 선택되어 있는 경우 검정색 배경에 흰색 글씨로 스타일을 보여 주게끔 코드를 수정해 보겠다.
+
+
+import React from 'react';
+import { NavLink, Route } from 'react-router-dom';
+import Profile from './Profile';
+
+const Profiles = () => {
+    const activeStyle = {
+        background: 'black',
+        color: 'white'
+    };
+
+    return (
+        <div>
+            <h3>사용자 목록:</h3>
+            <ul>
+                <li>
+                    <NavLink activeStyle={activeStyle} to="/profiles/velopert">
+                        velopert
+                    </NavLink>
+                </li>
+                <li>
+                    <NavLink activeStyle={activeStyle} to="/profiles/gildong">
+                        gildong
+                    </NavLink>
+                </li>
+            </ul>
+            ...
+        </div>
+    );
+};
+
+export default Profiles;
+
+
+코드를 작성했다면 각 프로필 페이지를 열어보자.

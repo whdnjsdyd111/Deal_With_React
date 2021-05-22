@@ -1,0 +1,421 @@
+            4.2 예제로 이벤트 핸들링 익히기
+
+실습할 단계는 다음과 같다.
+
+
+    컴포넌트 생성 및 불러오기
+            ↓
+    onChange 이벤트 핸들링
+            ↓
+    임의 메소드 만들기
+            ↓
+    input 여러 개 다루기
+            ↓
+    onKeyPress 이벤트 핸들링
+
+
+        4.2.1 컴포넌트 생성 및 불러오기
+
+        4.2.1.1 컴포넌트 생성
+
+실습 하기에 앞서 새 컴포넌트를 만들자. src 디렉터리 내부에 EventPractice.js 파일을 만든다.
+먼저 클래스형 컴포넌트로 작성하여 기능을 만들자.
+
+
+import React, { Component } from 'react';
+
+class EventPractice extends Component {
+    render() {
+        return (
+            <div>
+                <h1>이벤트 연습</h1>
+            </div>
+        );
+    }
+};
+
+export default EventPractice;
+
+
+        4.2.1.2 App.js 에서 EventPractice 렌더링
+
+App 컴포넌트에서 EventPractice를 불러와 렌더링하자.
+
+
+import React from 'react';
+import EventPractice from './EventPractice';
+
+const App = () => {
+  return <EventPractice />;
+};
+
+export default App;
+
+
+        4.2.2 onChange 이벤트 핸들링하기
+
+        4.2.2.1 onChange 이벤트 설정
+
+EventPractice 컴포넌트에 input 요소를 렌더링하는 코드와 요소에 onChange 이벤트를 설정하는 코드를 작성한다.
+다음 코드를 EventPractice 컴포넌트의 render 메소드에 작성하자.
+
+
+import React, { Component } from 'react';
+
+class EventPractice extends Component {
+    render() {
+        return (
+            <div>
+                <h1>이벤트 연습</h1>
+                <input
+                    type="text"
+                    name="message"
+                    placeholder="아무거나 입력"
+                    onChange={
+                        (e) => {
+                            console.log(e);
+                        }
+                    }
+                    />
+            </div>
+        );
+    }
+};
+
+export default EventPractice;
+
+
+코드를 저장하고 브라우저에서 확인해보자.
+
+이벤트 객체가 콘솔에 나타났다.
+
+
+onChange={
+    (e) => {
+        console.log(e);
+    }
+}
+
+
+여기서 콘솔에 기록되는 e 객체는 SyntheticEvent로 웹 브라우저의 네이티브 이벤트를 감싸는 객체이다.
+네이티브 이벤트와 인터페이스가 같으므로 순수 자바스트립트에서 HTML 이벤트를 다룰 때와 똑같이 사용하면 된다.
+
+SyntheticEvent는 네이티브 이벤트와 달리 이벤트가 끝나고 나면 이벤트가 초기화되므로 정보를 참조할 수 없다.
+예를 들어, 0.5초 뒤에 e 객체를 참조하면 e 객체 내부 값이 모두 비워지게 된다.
+
+만약 비동기적으로 이벤트 객체를 참조할 일이 있다면 e.persist() 함수를 호출해 줘야 한다.
+예를 들어 onChange 이벤트가 발생할 때, 앞으로 변할 인풋 값인 e.target.value를 콘솔에 기록해보자.
+
+
+onChange={
+    (e) => {
+        console.log(e.target.value);
+    }
+}
+
+
+값이 바뀔 때마다 바뀌는 값이 콘솔에 출력된다.
+
+
+        4.2.2 state에 input 값 담기
+
+이번엔 3장에서 배운 state에 input 값을 담아보자.
+
+3장에 배운 생성자 메소드인 constructor에서 state 초깃값을 설정하고, 
+이벤트 핸들링 함수 내부에서 this.setState 메소드를 호출하여 state를 업데이트 해보자.
+그 다음에는 input의 value 값을 state에 있는 값으로 설정한다.
+
+
+import React, { Component } from 'react';
+
+class EventPractice extends Component {
+
+    state = {
+        message: ''
+    }
+
+    render() {
+        return (
+            <div>
+                <h1>이벤트 연습</h1>
+                <input
+                    type="text"
+                    name="message"
+                    placeholder="아무거나 입력"
+                    value={this.state.message}
+                    onChange={
+                        (e) => {
+                            this.setState({
+                                message: e.target.value
+                            })
+                        }
+                    }
+                    />
+            </div>
+        );
+    }
+};
+
+export default EventPractice;
+
+
+코드를 저장하고, 인풋에 아무거나 입력해보자.
+오류를 발생시키지 않고 제대로 입력할 수 있다면 state에 텍스트를 잘 담은 것이다.
+
+
+        4.2.2.3 버튼을 누를 때 comment 값을 공백으로 설정
+
+정말로 우리가 입력한 값이 state에 잘 들어갔는지, 그리고 인풋에서 그 값을 제대로 반영하는지 검증해보자.
+input 요소 코드 아래쪽에 button을 하나 만들고, 클릭 이벤트가 발생하면 현재 comment 값을 메시지 박스로 띄운 후
+comment 값을 공백으로 설정하자.
+
+
+import React, { Component } from 'react';
+
+class EventPractice extends Component {
+
+    state = {
+        message: ''
+    }
+
+    render() {
+        return (
+            <div>
+                <h1>이벤트 연습</h1>
+                <input
+                    ...
+                    />
+                <button onClick={
+                    () => {
+                        alert(this.state.message);
+                        this.setState({
+                            message: ''
+                        });
+                    }
+                }>확인</button>
+            </div>
+        );
+    }
+};
+
+export default EventPractice;
+
+
+alert 를 사용하여 현재 message 값을 화면에 표시되게 했다.
+
+
+        4.2.3 임의 메소드 만들기
+
+4.1.1 절의 주의사항 "이벤트에 실행할 자바스클비트 코드를 전달하는 것이 아닌 함수 형태의 값을 전달" 한다고 배웠다.
+그렇기에 이벤트를 처리할 때 렌더링을 하는 동시에 함수를 만들어서 전달해 줬다.
+이 방법 대신 함수를 미리 준비하여 전달하는 방법도 있다. 성능상 차이가 거의 없지만, 가독성은 훨씬 높다.
+(하지만 상황에 따라 렌더링 메소드 내부에서 함수를 만드는 것이 편할 때도 있다. 이는 6장에서 배운다.)
+
+앞서 onChange와 onClick에 전달한 함수를 따로 빼내서 컴포넌트 임의 메소드를 만들어보자.
+
+
+import React, { Component } from 'react';
+
+class EventPractice extends Component {
+
+    state = {
+        message: ''
+    }
+
+    constructor(props) {
+        super(props);
+        this.handleChange = this.handleChange.bind(this);
+        this.handleClick = this.handleClick.bind(this);
+    }
+
+    handleChange(e) {
+        this.setState({
+            message: e.target.value
+        });
+    }
+
+    handleClick(e) {
+        alert(this.state.message);
+        this.setState({
+            message: ''
+        });
+    }
+
+    render() {
+        return (
+            <div>
+                <h1>이벤트 연습</h1>
+                <input
+                    type="text"
+                    name="message"
+                    placeholder="아무거나 입력"
+                    value={this.state.message}
+                    onChange={this.handleChange}
+                    />
+                <button onClick={this.handleClick}>확인</button>
+            </div>
+        );
+    }
+};
+
+export default EventPractice;
+
+
+코드가 더 깔끔해졌다.
+
+
+        4.2.4 input 여러 개 다루기
+    
+input 값을 state에 넣는 방법을 배웠는데, input이 여러 개일 때는 어떻게 할까?
+메소드를 여러 개 만드는 것도 방법이긴 하지만, 더 쉽게 처리하는 방법이 있다.
+
+바로 event  객체를 활용하는 것이다. e.target.value 값을 사용하면 된다. onChange 이벤트 핸들러에서
+e.target.name은 해당 인풋의 name을 가리킨다. 지금은 message가 될 것이다.
+이값을 사용하여 state를 설정하면 쉽게 해결할 수 있다. 코드를 살펴보자.
+
+다음 코드에서는 render 함수에서 name 값이 username인 input을 렌더링해 줬고, state 쪽에도 username 이라는 값을
+추가해 줬다. 그리고 handleChange도 조금 변경해 주었다.
+
+
+import React, { Component } from 'react';
+
+class EventPractice extends Component {
+
+    state = {
+        username: '',
+        message: ''
+    }
+
+    handleChange = (e) => {
+        this.setState({
+            [e.target.name]: e.target.value
+        });
+    }
+
+    handleClick = () => {
+        alert(this.state.username + ": " + this.state.message);
+        this.setState({
+            username: '',
+            message: ''
+        })
+    }
+
+    render() {
+        return (
+            <div>
+                <h1>이벤트 연습</h1>
+                <input
+                    type="text"
+                    name="username"
+                    placeholder="사용자명"
+                    value={this.state.username}
+                    onChange={this.handleChange}
+                    />
+                <input
+                    type="text"
+                    name="message"
+                    placeholder="아무거나 입력"
+                    value={this.state.message}
+                    onChange={this.handleChange}
+                    />
+                <button onClick={this.handleClick}>확인</button>
+            </div>
+        );
+    }
+};
+
+export default EventPractice;
+
+
+여기서 다음 코드가 핵심이다.
+
+
+handleChange = (e) => {
+    this.setState({
+        [e.target.name]: e.target.value
+    });
+}
+
+
+객체 안에 key를 [ ] 로 감싸면 그 안에 넣은 레퍼런스가 가리키는 실제 값이 key 값으로 사용된다.
+예를 들어 다음과 객체를 만들면
+
+
+const name = 'variantKey';
+const object = {
+    [name]: 'value'
+};
+
+
+결과는 다음과 같다.
+
+
+{
+    'variantKey': 'value'
+}
+
+
+        4.2.5 onKeyPress 이벤트 핸들링
+
+이번에는 키를 눌렀을 때 발생하는 KeyPress 이벤트를 처리하는 방법을 알아보자.
+comment 인풋에서 엔터를 눌렀을 때 handleClick 메소드를 호출하도록 코드를 작성해보자.
+
+
+import React, { Component } from 'react';
+
+class EventPractice extends Component {
+
+    state = {
+        username: '',
+        message: ''
+    }
+
+    handleChange = (e) => {
+        this.setState({
+            [e.target.name]: e.target.value
+        });
+    }
+
+    handleClick = () => {
+        alert(this.state.username + ": " + this.state.message);
+        this.setState({
+            username: '',
+            message: ''
+        })
+    }
+
+    handleKeyPress = (e) => {
+        if(e.key === 'Enter') {
+            this.handleClick();
+        }
+    }
+
+    render() {
+        return (
+            <div>
+                <h1>이벤트 연습</h1>
+                <input
+                    type="text"
+                    name="username"
+                    placeholder="사용자명"
+                    value={this.state.username}
+                    onChange={this.handleChange}
+                    />
+                <input
+                    type="text"
+                    name="message"
+                    placeholder="아무거나 입력"
+                    value={this.state.message}
+                    onChange={this.handleChange}
+                    onKeyPress={this.handleKeyPress}
+                    />
+                <button onClick={this.handleClick}>확인</button>
+            </div>
+        );
+    }
+};
+
+export default EventPractice;
+
+
+두 번째 인풋에서 텍스트를 입력하고 엔터를 눌러보자.

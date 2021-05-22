@@ -1,0 +1,335 @@
+            23.4 토큰 발급 및 검증하기
+
+이제 클라이언트에서 사용자 로그인 정보를 지니고 있을 수 있도록 서버에서 토큰을 발급해 주겠다.
+JWT 토큰을 만들기 위해서는 jsonwebtoken 이라는 모듈을 설치해야 한다.
+
+
+$ yarn add jsonwebtoken
+
+
+        23.4.1 비밀키 설정하기
+
+.env 파일을 열어서 JWT 토큰을 만들 때 사용할 비밀키를 만든다. 이 비밀키는 문자열로 아무거나 입력하면 된다.
+macOS/리눅스를 사용한다면 터미널에 다음 명령어를 입력해 보자.
+
+
+$ openssl rand -hex 64
+
+
+이 명령어를 입력하면 랜덤 문자열을 만들어 준다. 이 값을 복사해 .env 파일에서 JWT_SECRET 값으로 설정하자.
+윈도우라면 아무 문자열이나 직접 입력해도 상관없다.
+
+
+PORT=4000
+MONGO_URL=mongodb://localhost:27017/blog
+JWT_SECRET=G9r5A1VGWRPUK964dEkHrLEGCYqUs9sgq47VEiXQgfZ2XUv5jmuaBZpMEihRo4V3syk1p6tEhrUX8JWj97J7xchgiTQYTqDxG7D5
+
+
+이 비밀키는 나중에 JWT 토큰의 서명을 만드는 과정에서 사용된다. 비밀키는 외부에 공개되면 절대로 안된다.
+비밀키가 공개되는 순간, 누구든지 마음대로 JWT 토큰을 발급할 수 있기 때문이다.
+
+
+        23.4.2 토큰 발급하기
+
+비밀키를 설정했으면 user 모델 파일에서 generateToken 이라는 인스턴스 메소드를 만들어주자.
+
+
+import mongoose, { Schema } from 'mongoose';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+
+...
+
+UserSchema.methods.generateToken = function() {
+    const token = jwt.sign(
+        // 첫 번째 파라미터에는 토큰 안에 집어넣고 싶은 데이터를 넣는다.
+        {
+            _id: this.id,
+            username: this.username
+        },
+        process.env.JWT_SECRET, // 두 번째 파라미터에는 JWT 암호를 넣는다.
+        {
+            expiresIn: '7d',    // 7일 동안 유효함
+        },
+    );
+    return token;
+};
+
+
+이제 회원가입과 로그인에 성공했을 때 토큰을 사용자에게 전달해 주겠다.
+사용자가 브라우저에서 토큰을 사용할 때는 주로 두 가지 방법을 사용한다.
+첫 번째는 브라우저의 localStorage 혹은 sessionStorage 에 담아서 사용하는 방법이고,
+두 번째는 브라우저의 쿠키에 담아서 사용하는 방법이다.
+
+브라우저의 localStorage 혹은 sessionStorage에 토큰을 담으면 사용하기가 매우 편리하고 구현하기도 쉽다.
+하지만 만약 누군가가 페이지에 악성 스크립트를 삽입한다면 쉽게 토큰을 탈취할 수 있다(이런 공격을 XSS(Cross Site Script)라 한다).
+
+쿠키에 담아도 같은 문제가 발생할 수 있지만, httpOnly 라는 속성을 활성화하면 자바스크립트를 통해 쿠키를 조회할 수 없으므로
+악성 스크립트로부터 안전하다. 그 대신 CSRF(Cross Site Request Forgery)라는 공격에 취약해질 수 있다.
+이 공격은 토큰을 쿠키에 담으면 사용자가 서버로 요청할 때마다 무조건 토큰이 함께 전달된다는 점을 이용해서
+사용자가 모르게 원하지 않는 API 요청을 하게 만든다.
+예를 들어 사용자가 자신도 모르는 상황에서 어떠한 글을 작성하거나 삭제하거나, 또는 탈퇴하게 만들 수도 있다.
+
+단, CSRF는 CSRF 토큰 사용 및 Referer 검증 등의 방식으로 제대로 막을 수 있는 반면, XSS는 보안장치를 적용해 놓아도
+개발자가 놓칠 수 있는 다양한 취약점을 통해 공격 받을 수 있다.
+이 책에서는 사용자 토큰을 쿠키에 담아서 사용하겠다. auth.ctrl.js 파일에서 register와 login 함수를 다음과 같이 수정한다.
+
+
+export const register = async (ctx) => {
+    ...
+
+        ctx.body = user.serialize();
+
+        const token = user.generateToken();
+        ctx.cookies.set('access_token', token, {
+            maxAge: 1000 * 60 * 60 * 24 * 7,    // 7일
+            httpOnly: true,
+        });
+    } catch (e) {
+        ctx.throw(500, e);
+    }
+};
+
+export const login = async (ctx) => {
+    ...
+
+        ctx.body = user.serialize();
+
+        const token = user.generateToken();
+        ctx.cookies.set('access_token', token, {
+            maxAge: 1000 * 60 * 60 * 24 * 7,    // 7일
+            httpOnly: true,
+        })
+    } catch (e) {
+        ctx.throw(500, e);
+    }
+};
+
+
+이제 다시 Postman으로 로그인을 요청하고, 응답 부분의 Headers 를 선택해서 확인해보자.
+Set-Cookie 라는 헤더가 보일 것이다.
+
+
+        23.4.3 토큰 검증하기
+
+이번에는 사용자의 토큰을 확인한 후 검증하는 작업을 해 볼텐데, 이 작업을 미들웨어를 통해 처리해보겠다.
+src 디렉터리에 lib 라는 디렉터리를 만들고, 그 안에 jwtMiddleware.js 라는 파일을 생성해서 다음 코드를 작성한다.
+
+
+import jwt from 'jsonwebtoken';
+
+const jwtMiddleware = (ctx, next) => {
+    const token = ctx.cookies.get('access_token');
+    if(!token) return next();   // 토큰이 없음
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log(decoded);
+        return next();
+    } catch (e) {
+        // 토큰 검증 실패
+        return next();
+    }
+};
+
+export default jwtMiddleware;
+
+
+미들웨어를 만든 뒤 main.js 에서 app에 미들웨어를 적용한다. jwtMiddleware를 적용하는 작업은 
+app에 router 미들웨어를 적용하기 전에 이루어져아 한다(즉, 코드가 더욱 상단에 위치해여 한다.)
+
+
+require('dotenv').config();
+import Koa from 'koa';
+import Router from 'koa-router';
+import bodyParser from 'koa-bodyparser';
+import mongoose from 'mongoose';
+
+import api from './api';
+import jwtMiddleware from './lib/jwtMiddleware';
+
+...
+const app = new Koa();
+const router = new Router();
+
+// 라우터 설정
+router.use('/api', api.routes()); // api 라우트 적용
+
+// 라우터 적용 전에 bodyParser 적용
+app.use(bodyParser());
+app.use(jwtMiddleware);
+
+// app 인스턴스에 라우터 적용
+app.use(router.routes()).use(router.allowedMethods());
+...
+
+
+미들웨어를 적용한 뒤 Postman으로 http://localhost:4000/api/auth/check 경로에 GET 요청을 해보자.
+Not Found 에러가 뜰 텐데, 이는 아직 API를 구현하지 않아서이다. 터미널로 한번 확인해보자.
+현재 토큰이 해석된 결과가 터미널에 나타날 것이다. 만약 나타나지 않는다면, 로그인 API를 다시 성공적으로 호출하고 확인하자.
+
+
+Listening to port 4000
+Connected to MongoDB
+{
+  _id: '5febcf8f1d69233f983b27db',
+  username: 'velopert',
+  iat: 1609295036,
+  exp: 1609899836
+}
+
+
+이렇게 해석된 결과를 이후 미들웨어에서 사용할 수 있게 하려면 ctx의 state 안에 넣어 주면 된다.
+jwtMiddleware를 다음과 같이 수정하자.
+
+
+import jwt from 'jsonwebtoken';
+
+const jwtMiddleware = (ctx, next) => {
+    const token = ctx.cookies.get('access_token');
+    if (!token) return next(); // 토큰이 없음
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        ctx.state.user = {
+            _id: decoded._id,
+            username: decoded.username,
+        };
+        console.log(decoded);
+        return next();
+    } catch (e) {
+        // 토큰 검증 실패
+        return next();
+    }
+};
+
+export default jwtMiddleware;
+
+
+콘솔에 토큰 정보를 출력하는 코드 이후 토큰이 만료되기 전에 재발급해 주는 기능을 구현해 주고 나서 지우자.
+이제 auth.ctrl.js 의 check 함수를 다음과 같이 구현한다.
+
+
+/*
+    GET /api/auth/check
+*/
+export const check = async (ctx) => {
+    const { user } = ctx.state;
+    if(!user) {
+        // 로그인 중이 아님
+        ctx.status = 401;   // Unauthorized
+        return;
+    }
+    ctx.body = user;
+};
+
+
+Postman으로 다음을 요청해보자.
+
+
+GET http://localhost:4000/api/auth/check
+
+
+서버에서 다음과 같은 응답이 나타날 것이다.
+
+
+{
+    "_id": "5febcf8f1d69233f983b27db",
+    "username": "velopert"
+}
+
+
+        23.4.4 토큰 재발급하기
+
+jwtMiddleware를 통해 토큰이 해석된 이후에 다음과 같은 결과물이 출력된다.
+
+
+{
+  _id: '5febcf8f1d69233f983b27db',
+  username: 'velopert',
+  iat: 1609295036,
+  exp: 1609899836
+}
+
+
+여기서 lat 값은 이 토큰이 언제 만들어졌는지 알려주는 값이고, exp 값은 언제 만료되는지 알려주는 값이다.
+exp에 표현된 날짜가 3.5일 이라면 토큰을 새로운 토큰으로 재발급해 주는 기능을 구현해 보겠다.
+
+
+import jwt from 'jsonwebtoken';
+import User from '../models/user';
+
+const jwtMiddleware = async (ctx, next) => {
+    const token = ctx.cookies.get('access_token');
+    if (!token) return next(); // 토큰이 없음
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        ctx.state.user = {
+            _id: decoded._id,
+            username: decoded.username,
+        };
+        // 토큰의 남은 유효 기간이 3.5일 미만이면 재발급
+        const now = Math.floor(Date.now() / 1000);
+        if(decoded.exp - now < 60 * 60 * 24 * 3.5) {
+            const user = await User.findById(decoded._id);
+            const token = user.generateToken();
+            ctx.cookies.set('access_token', token, {
+                maxAge: 1000 * 60 * 60 * 24 * 7,    // 7일
+                httpOnly: true,
+            });
+        }
+        return next();
+    } catch (e) {
+        // 토큰 검증 실패
+        return next();
+    }
+};
+
+export default jwtMiddleware;
+
+
+토큰 재발급이 잘되는지 확인해 보고 싶다면 user 모델 파일의 generateToken 함수에서 토큰 유효 기간을 3일로 설정하고,
+다시 login API를 요청한 다음 check API를 요청해보자. 토큰 재발급이 잘 이루어졌다면, check API를 요청했을 때
+Headers 에서 새 토큰이 Set-Cookie를 통해 설정될 것이다.
+
+
+UserSchema.methods.generateToken = function () {
+    const token = jwt.sign(
+        // 첫 번째 파라미터에는 토큰 안에 집어넣고 싶은 데이터를 넣는다.
+        {
+            _id: this.id,
+            username: this.username,
+        },
+        process.env.JWT_SECRET, // 두 번째 파라미터에는 JWT 암호를 넣는다.
+        {
+            expiresIn: '3d', // 3일 동안 유효함
+        },
+    );
+    return token;
+};
+
+
+Postman으로 확인해보고 토큰 재발급이 된다면 다시 7일로 되돌리자.
+
+
+        23.4.5 로그아웃 기능 구현하기
+
+마지막 회원 인증 관련 API인 로그아웃 기능을 구현해보자. 이 API는 매우 간단하다. 쿠키를 지워주기만 하면 끝난다.
+auth.ctrl.js 에서 logout 함수를 다음과 같이 작성해보자.
+
+
+/* 
+    POST /api/auth/logout
+*/
+export const logout = async (ctx) => {
+    ctx.cookies.set('access_token');
+    ctx.status = 204;   // No Content
+};
+
+
+정말 간단하다. 다 작성했다면 Postman으로 다음 API를 호출하자.
+
+
+POST http://localhost:4000/api/auth/logout
+
+
+access_token이 비워지는 Set-Cookie 헤더가 나타난다. 이전에 만든 토큰의 유효 기간이 3.5일 이었기 때문에 한 번 더
+재발급 받을 수 있다. 그런 경우 로그아웃 API를 한 번 더 요청해서 위 결과가 나타나는지 확인해보자.

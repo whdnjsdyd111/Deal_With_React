@@ -1,0 +1,24 @@
+            7.4 정리
+
+컴포넌트의 라이프사이클 메소드 흐름을 한번에 확인해보자.
+
+
+        마운트              업데이트                언마운트
+        │                       │                   │
+    constructor                 │                   componentWillUnmount
+        │                       │               
+    --------getDerivedStateFromProps----
+        │                       │
+        │               shouldComponentUpdate
+        │                       │
+    --------render----------------------
+        │                       │
+        │               getSnapshotBeforeUpdate
+        │                       │
+    componentDidMount   componentDidUpdate
+
+
+라이프사이클 메소드는 컴포넌트 상태에 변화가 있을 때 실행하는 메소드이다.
+이 메소드들은 서드파티 라이브러리를 사용하거나 DOM을 직접 건드려야 하는 상황에서 유용하다.
+추가로 컴포넌트 업데이트의 성능을 개선할 때는 shouldComponentUpdate가 중요하게 사용된다.
+이에 대해서는 11장에서 다룬다.

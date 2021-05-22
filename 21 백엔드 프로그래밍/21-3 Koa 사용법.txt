@@ -1,0 +1,285 @@
+            21.3 Koa 기본 사용법
+
+        21.3.1 서버 띄우기
+
+먼저 서버를 여는 방법부터 알아본다. 기존 index.js 파일에 작성한 코드를 지우고, 다음 코드를 입력해보자.
+
+
+const Koa = require('koa');
+
+const app = new Koa();
+
+app.use((ctx) => {
+    ctx.body = 'hello world';
+});
+
+app.listen(4000, () => {
+    console.log('Listening to port 4000');
+});
+
+
+서버를 포트 4000번으로 열고, 서버에 접속하면 'hello world' 라는 텍스트를 반환하도록 설정했다.
+서버를 실행해보자.
+
+
+$ node src
+Listening to port 4000
+
+
+원래 node 를 통해 자바스크립트 파일을 실행할 때는 node src/index.js 와 같이 전체 경로를 입력하는 것이 맞지만,
+index.js 파일은 예외로 디렉터리까지만 입력해도 실행할 수 있다. index.js를 해당 디렉터리를 대표하는 파일이라고 생각하면 된다.
+
+이제 웹 브라우저로 http://localhost:5000 에 접속해보자.
+
+
+        21.3.2 미들웨어
+
+Koa 애플리케이션은 미들웨어의 배열로 구성되어 있다. 조금 전 코드에서 app.use 함수를 사용했다.
+이 함수는 미들웨어 함수를 애플리케이션에 등록한다.
+미들웨어 함수는 다음과 같은 구조로 이루어져 있다.
+
+
+(ctx, next) => {
+
+}
+
+
+Koa의 미들웨어 함수는 두 개의 파라미터를 받는다. 첫 번째 파라미터는 조금 전에도 사용한 ctx라는 값이고,
+두 번째 파라미터는 next이다.
+ctx는 Context의 줄임말로 웹 요청과 응답에 관한 정보를 지니고 있다. next는 현재 처리 중인 미들웨어의 다음 미들웨어를 호출하는 함수이다.
+미들웨어를 등록하고 next 함수를 호출하지 않으면, 그 다음 미들웨어를 처리하지 않는다.
+
+만약 미들웨어에서 next를 사용하지 않으면 ctx => {} 와 같은 형태로 파라미터에 next를 설정하지 않아도 된다.
+주로 다음 미들웨어를 처리할 필요가 없는 라우트 미들웨어를 나중에 설정할 때 이러한 구조로 next를 생략하여 미들웨어를 작성한다.
+
+미들웨어는 app.use를 사용하여 등록하는 순서대로 처리된다. 다음과 같이 현재 요청을 받은 주소와
+우리가 정해 준 숫자를 기록하는 두 개의 미들웨어를 작성한다.
+
+
+const Koa = require('koa');
+
+const app = new Koa();
+
+app.use((ctx, next) => {
+    console.log(ctx.url);
+    console.log(1);
+    next();
+});
+
+app.use((ctx, next) => {
+    console.log(2);
+    next();
+});
+
+app.use(ctx => {
+    ctx.body = 'hello world';
+})
+
+app.listen(4000, () => {
+    console.log('Listening to port 4000');
+});
+
+
+실행 중인 서버를 Ctrl + C 를 눌러서 종료한 뒤, 다시 node src 명령어를 입력하여 실행해 주자.
+그리고 다시 http://localhost:4000 를 열어 터미널을 확인한다.
+
+
+Listening to port 4000
+/
+1
+2
+/favicon.ico
+1
+2
+
+
+크롬 브라우저는 사용자가 웹 페이지에 들어가면 해당 사이트의 아이콘 파일인 /favicon.ico 파일을 서버에 요청하기 때문에
+/ 경로도 나타나고 /favicon.ico 경로도 나타난다.
+이번에는 첫 번째 미들웨어에서 호출하던 next 함수를 주석으로 처리해 보자.
+
+
+const Koa = require('koa');
+
+const app = new Koa();
+
+app.use((ctx, next) => {
+    console.log(ctx.url);
+    console.log(1);
+    // next();
+});
+
+app.use((ctx, next) => {
+    console.log(2);
+    next();
+});
+
+app.use((ctx) => {
+    ctx.body = 'hello world';
+});
+
+app.listen(4000, () => {
+    console.log('Listening to port 4000');
+});
+
+
+그리고 서버를 재시작한 뒤 다시 들어가보자.
+
+
+Listening to port 4000
+/
+1
+/favicon.ico
+1
+
+
+next를 호출하지 않으니 첫 번째 미들웨어까지만 호출하고 그 아래에 있는 미들웨어는 모두 무시되었다.
+이런 속성을 사용하여 조건부로 다음 미들웨어 처리를 무시하게 만들 수 있는데, 한번 해보자.
+다음 코드에서는 요청 경로에 authorized=1 이라는 쿼리 파라미터가 포함되어 있으면 이후 미들웨어를 처리해 주고,
+그렇지 않으면 이후 미들웨어를 처리하지 않는다.
+
+
+const Koa = require('koa');
+
+const app = new Koa();
+
+app.use((ctx, next) => {
+    console.log(ctx.url);
+    console.log(1);
+    if(ctx.query.authorized !== '1') {
+        ctx.status = 401;   // Unauthorized
+        return;
+    }
+    next();
+});
+
+app.use((ctx, next) => {
+    console.log(2);
+    next();
+});
+
+app.use((ctx) => {
+    ctx.body = 'hello world';
+});
+
+app.listen(4000, () => {
+    console.log('Listening to port 4000');
+});
+
+
+쿼리 파라미터는 문자열이기 때문에 비교할 때는 꼭 문자열 형태로 비교해야 한다.
+이제 서버를 재시작하고 다음 링크에 들어가보고 어떤 결과가 나오는지 확인하자.
+
+
+    http://localhost:4000/
+    http://localhost:4000/?authorized=1
+
+
+지금은 단순히 주소의 쿼리 파라미터를 사용하여 조건부로 처리했지만,
+나중에는 웹 요청의 쿠키 혹은 헤더를 통해 처리할 수도 있다.
+
+
+    21.3.2.1 next 함수는 Promise를 반환
+
+next 함수를 호출하면 Promise를 반환한다. 이는 Koa가 Express와 차별화되는 부분이다.
+next 함수를 반환하는 Promise는 다음에 처리해야 할 미들웨어가 끝나야 완료된다. 다음과 같이 next 함수 호출 이후에
+then을 사용하여 Promise가 끝난 다음 콘솔에 END를 기록하도록 수정해보자.
+
+
+const Koa = require('koa');
+
+const app = new Koa();
+
+app.use((ctx, next) => {
+    console.log(ctx.url);
+    console.log(1);
+    if (ctx.query.authorized !== '1') {
+        ctx.status = 401; // Unauthorized
+        return;
+    }
+    next().then(() => {
+        console.log('END');
+    })
+});
+
+app.use((ctx, next) => {
+    console.log(2);
+    next();
+});
+
+app.use((ctx) => {
+    ctx.body = 'hello world';
+});
+
+app.listen(4000, () => {
+    console.log('Listening to port 4000');
+});
+
+
+서버를 재시작하여 http://localhost:4000/?authorized=1 에 들어가보자.
+
+
+Listening to port 4000
+/?authorized=1
+1
+2
+END
+
+
+END가 나타나는 것을 확인할 수 있다.(/favicon.ico 는 브라우저에 따라 요청하지 않을 수도 있다.)
+
+
+    21.3.2.2 async/await 사용하기
+
+Koa는 async/await를 정식으로 지원하기 때문에 해당 문법을 아주 편하게 사용할 수 있다.
+
+
+    노트
+
+서버 사이드 렌더링을 할 때 사용했던 Express도 async/await 문법을 사용할 수 있지만, 오류를 처리하는 부분이 제대로
+작동하지 않을 수 있다. 백엔드 개발을 하면서 예상치 못한 에러를 제대로 잡아내려면 
+express-async-errors 라는 라이브러리를 따로 사용해야 한다.
+
+
+기존 코드를 async/await 를 사용하는 형태로 한번 수정해본다.
+
+
+const Koa = require('koa');
+
+const app = new Koa();
+
+app.use(async (ctx, next) => {
+    console.log(ctx.url);
+    console.log(1);
+    if (ctx.query.authorized !== '1') {
+        ctx.status = 401; // Unauthorized
+        return;
+    }
+    await next();
+    console.log('END');
+});
+
+app.use((ctx, next) => {
+    console.log(2);
+    next();
+});
+
+app.use((ctx) => {
+    ctx.body = 'hello world';
+});
+
+app.listen(4000, () => {
+    console.log('Listening to port 4000');
+});
+
+
+서버를 재시작하고 http://localhost:4000/?authorized=1 에 접속해보자.
+
+
+Listening to port 4000
+/?authorized=1
+1
+2
+END
+
+
+이전과 동일하게 나타난다.

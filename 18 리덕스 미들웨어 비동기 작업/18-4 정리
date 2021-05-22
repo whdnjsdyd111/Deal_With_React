@@ -1,0 +1,2 @@
+앞으로 비동기 작업을 할 때는 redux-saga와 redux-thunk 외에도
+redux-promise-middleware, redux-pender, redux-observable 등 이 책에서 다루지 않은 미들웨어도 시도해보자.
